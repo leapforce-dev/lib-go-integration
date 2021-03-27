@@ -1,6 +1,9 @@
 package integration
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 var currentEnvironment string
 
@@ -25,4 +28,18 @@ func IsEnvironment(environment string) bool {
 
 func CurrentEnvironment() string {
 	return strings.ToUpper(currentEnvironment)
+}
+
+func WithEnvironment(names ...*string) {
+	if IsEnvironmentLive() {
+		return
+	}
+
+	for _, name := range names {
+		if name == nil {
+			continue
+		}
+		(*name) = fmt.Sprintf("%s_%s", *name, CurrentEnvironment())
+	}
+	return
 }
