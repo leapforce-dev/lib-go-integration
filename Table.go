@@ -3,10 +3,10 @@ package integration
 import "strings"
 
 type Table struct {
-	objectName string
-	Schema     interface{}
-	Replace    *TableReplace
-	Merge      *TableMerge
+	Name    string
+	Schema  interface{}
+	Replace *TableReplace
+	Merge   *TableMerge
 }
 
 type TableReplace struct {
@@ -21,16 +21,16 @@ type TableMerge struct {
 // TableName returns tablename
 //
 func (t Table) TableName() string {
-	return t.objectName
+	return t.Name
 }
 
 // ObjectName returns ObjectName
 //
 func (t Table) ObjectName() string {
-	objectName := t.objectName
+	objectName := t.Name
 
 	if !IsEnvironmentLive() {
-		objectName += strings.ToLower(currentEnvironment)
+		objectName += strings.ToUpper(currentEnvironment)
 	}
 
 	return objectName

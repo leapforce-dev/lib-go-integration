@@ -20,23 +20,13 @@ func IsModeHistory() bool {
 }
 
 func IsMode(mode string) bool {
-	return strings.ToLower(currentMode) == strings.ToLower(mode)
+	return strings.ToUpper(currentMode) == strings.ToUpper(mode)
 }
 
 func modeIsValid() bool {
 	return IsModeRecent() || IsModeHistory()
 }
 
-func (m Mode) in(modes *[]Mode) bool {
-	if modes == nil {
-		return false
-	}
-
-	for _, mode := range *modes {
-		if string(mode) == string(m) {
-			return true
-		}
-	}
-
-	return false
+func CurrentMode() string {
+	return strings.ToUpper(currentMode)
 }

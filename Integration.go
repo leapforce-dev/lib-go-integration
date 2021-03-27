@@ -3,7 +3,9 @@ package integration
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	"cloud.google.com/go/civil"
 	errortools "github.com/leapforce-libraries/go_errortools"
 	utilities "github.com/leapforce-libraries/go_utilities"
 )
@@ -113,16 +115,23 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		return nil, errortools.ErrorMessage(fmt.Sprintf("Invalid mode: '%s'", currentMode))
 	}
 
+	integration.SetToday()
+
 	return &integration, nil
 }
 
 func (i Integration) Print() {
 	if i.validModes != nil {
-		fmt.Printf(">>> Mode : %s\n", strings.ToLower(currentMode))
+		fmt.Printf(">>> Mode : %s\n", strings.ToUpper(currentMode))
 	}
 	if i.validEnvironments != nil {
-		fmt.Printf(">>> Environment : %s\n", strings.ToLower(currentEnvironment))
+		fmt.Printf(">>> Environment : %s\n", strings.ToUpper(currentEnvironment))
 	}
+}
+
+func (i Integration) SetToday() {
+	date := civil.DateOf(time.Now())
+	today = &date
 }
 
 func (i Integration) environmentIsValid() bool {
@@ -131,7 +140,7 @@ func (i Integration) environmentIsValid() bool {
 	}
 
 	for _, environment := range *i.validEnvironments {
-		if strings.ToLower(environment) == strings.ToLower(currentEnvironment) {
+		if strings.ToUpper(environment) == strings.ToUpper(currentEnvironment) {
 			return true
 		}
 	}
@@ -145,7 +154,7 @@ func (i Integration) modeIsValid() bool {
 	}
 
 	for _, mode := range *i.validModes {
-		if strings.ToLower(mode) == strings.ToLower(currentMode) {
+		if strings.ToUpper(mode) == strings.ToUpper(currentMode) {
 			return true
 		}
 	}

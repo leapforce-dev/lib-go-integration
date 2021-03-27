@@ -20,5 +20,9 @@ func IsEnvironmentLive() bool {
 }
 
 func IsEnvironment(environment string) bool {
-	return strings.ToLower(currentEnvironment) == strings.ToLower(environment)
+	return strings.ToUpper(currentEnvironment) == strings.ToUpper(environment)
+}
+
+func CurrentEnvironment() string {
+	return strings.ToUpper(currentEnvironment)
 }
