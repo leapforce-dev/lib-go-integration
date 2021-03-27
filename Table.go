@@ -1,6 +1,6 @@
 package integration
 
-const testSuffix string = "test"
+import "strings"
 
 type Table struct {
 	objectName string
@@ -29,8 +29,8 @@ func (t Table) TableName() string {
 func (t Table) ObjectName() string {
 	objectName := t.objectName
 
-	if IsEnvTest() {
-		objectName += testSuffix
+	if !IsEnvironmentLive() {
+		objectName += strings.ToLower(currentEnvironment)
 	}
 
 	return objectName

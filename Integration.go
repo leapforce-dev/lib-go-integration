@@ -2,80 +2,153 @@ package integration
 
 import (
 	"fmt"
+	"strings"
 
 	errortools "github.com/leapforce-libraries/go_errortools"
 	utilities "github.com/leapforce-libraries/go_utilities"
 )
 
-var currentEnvironment Environment
-var currentMode Mode
-
 type Integration struct {
-	//environment Environment
-	//mode        Mode
-	validModes *[]Mode
+	validEnvironments *[]string
+	validModes        *[]string
 }
 
 type IntegrationConfig struct {
-	ValidModes *[]Mode
+	HasEnvironment     *bool //default true
+	HasEnvironmentTest *bool //default true
+	HasEnvironmentLive *bool //default true
+	OtherEnvironments  *[]string
+	HasMode            *bool //default true
+	HasModeRecent      *bool //default true
+	HasModeHistory     *bool //default true
+	OtherModes         *[]string
 }
 
 func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errortools.Error) {
-	var environment string
-	var mode string
-	var arguments []*string
+	var validEnvironments, validModes *[]string = &[]string{}, &[]string{}
 
-	arguments = append(arguments, &environment)
-	if integrationConfig.ValidModes != nil {
-		arguments = append(arguments, &mode)
+	var hasEnvironment, hasEnvironmentTest, hasEnvironmentLive bool = true, true, true
+	var hasMode, hasModeRecent, hasModeHistory bool = true, true, true
+
+	if integrationConfig != nil {
+		if integrationConfig.HasEnvironment != nil {
+			hasEnvironment = *integrationConfig.HasEnvironment
+		}
+		if hasEnvironment {
+			if integrationConfig.HasEnvironmentTest != nil {
+				hasEnvironmentTest = *integrationConfig.HasEnvironmentTest
+			}
+			if integrationConfig.HasEnvironmentLive != nil {
+				hasEnvironmentLive = *integrationConfig.HasEnvironmentLive
+			}
+			if integrationConfig.OtherEnvironments != nil {
+				validEnvironments = integrationConfig.OtherEnvironments
+			}
+		}
+
+		if integrationConfig.HasMode != nil {
+			hasMode = *integrationConfig.HasMode
+		}
+		if hasMode {
+			if integrationConfig.HasModeRecent != nil {
+				hasModeRecent = *integrationConfig.HasModeRecent
+			}
+			if integrationConfig.HasModeHistory != nil {
+				hasModeHistory = *integrationConfig.HasModeHistory
+			}
+			if integrationConfig.OtherModes != nil {
+				validModes = integrationConfig.OtherModes
+			}
+		}
 	}
 
-	e := utilities.GetArguments(arguments...)
-	if e != nil {
-		return nil, e
+	if hasEnvironment {
+		if hasEnvironmentTest {
+			*validEnvironments = append(*validEnvironments, string(EnvironmentTest))
+		}
+		if hasEnvironmentLive {
+			*validEnvironments = append(*validEnvironments, string(EnvironmentLive))
+		}
+	} else {
+		validEnvironments = nil
+	}
+
+	if hasMode {
+		if hasModeRecent {
+			*validModes = append(*validModes, string(ModeRecent))
+		}
+		if hasModeHistory {
+			*validModes = append(*validModes, string(ModeHistory))
+		}
+	} else {
+		validModes = nil
 	}
 
 	integration := Integration{
-		//environment: environmentNone,
-		//mode:        modeNone,
-		validModes: integrationConfig.ValidModes,
+		validEnvironments: validEnvironments,
+		validModes:        validModes,
 	}
 
-	if !integration.envIsValid() {
-		return nil, errortools.ErrorMessage(fmt.Sprintf("Invalid environment: '%s'", environment))
+	var arguments []*string
+
+	if integration.validModes != nil {
+		arguments = append(arguments, &currentMode)
+	}
+	if integration.validEnvironments != nil {
+		arguments = append(arguments, &currentEnvironment)
 	}
 
-	currentEnvironment = Environment(environment)
+	if len(arguments) > 0 {
+		e := utilities.GetArguments(arguments...)
+		if e != nil {
+			return nil, e
+		}
+	}
+
+	if !integration.environmentIsValid() {
+		return nil, errortools.ErrorMessage(fmt.Sprintf("Invalid environment: '%s'", currentEnvironment))
+	}
 
 	if !integration.modeIsValid() {
-		return nil, errortools.ErrorMessage(fmt.Sprintf("Invalid mode: '%s'", mode))
+		return nil, errortools.ErrorMessage(fmt.Sprintf("Invalid mode: '%s'", currentMode))
 	}
-
-	currentMode = Mode(mode)
 
 	return &integration, nil
 }
 
-func IsEnvTest() bool {
-	return currentEnvironment == EnvironmentTest
+func (i Integration) Print() {
+	if i.validModes != nil {
+		fmt.Printf(">>> Mode : %s\n", strings.ToLower(currentMode))
+	}
+	if i.validEnvironments != nil {
+		fmt.Printf(">>> Environment : %s\n", strings.ToLower(currentEnvironment))
+	}
 }
 
-func IsEnvLive() bool {
-	return currentEnvironment == EnvironmentLive
-}
+func (i Integration) environmentIsValid() bool {
+	if i.validEnvironments == nil {
+		return true
+	}
 
-func (Integration) envIsValid() bool {
-	return IsEnvTest() || IsEnvLive()
-}
+	for _, environment := range *i.validEnvironments {
+		if strings.ToLower(environment) == strings.ToLower(currentEnvironment) {
+			return true
+		}
+	}
 
-func IsModeRecent() bool {
-	return currentMode == ModeRecent
-}
-
-func IsModeHistory() bool {
-	return currentMode == ModeHistory
+	return false
 }
 
 func (i Integration) modeIsValid() bool {
-	return IsModeRecent() || IsModeHistory()
+	if i.validModes == nil {
+		return true
+	}
+
+	for _, mode := range *i.validModes {
+		if strings.ToLower(mode) == strings.ToLower(currentMode) {
+			return true
+		}
+	}
+
+	return false
 }
