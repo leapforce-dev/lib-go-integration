@@ -108,11 +108,11 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 	}
 
 	if !integration.environmentIsValid() {
-		return nil, errortools.ErrorMessage(fmt.Sprintf("Invalid environment: '%s'", currentEnvironment))
+		return nil, errortools.ErrorMessage(fmt.Sprintf("Invalid environment: '%s'", CurrentEnvironment()))
 	}
 
 	if !integration.modeIsValid() {
-		return nil, errortools.ErrorMessage(fmt.Sprintf("Invalid mode: '%s'", currentMode))
+		return nil, errortools.ErrorMessage(fmt.Sprintf("Invalid mode: '%s'", CurrentMode()))
 	}
 
 	integration.SetToday()
@@ -122,10 +122,10 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 
 func (i Integration) Print() {
 	if i.validModes != nil {
-		fmt.Printf(">>> Mode : %s\n", strings.ToUpper(currentMode))
+		fmt.Printf(">>> Mode : %s\n", CurrentMode())
 	}
 	if i.validEnvironments != nil {
-		fmt.Printf(">>> Environment : %s\n", strings.ToUpper(currentEnvironment))
+		fmt.Printf(">>> Environment : %s\n", CurrentEnvironment())
 	}
 }
 
@@ -140,7 +140,7 @@ func (i Integration) environmentIsValid() bool {
 	}
 
 	for _, environment := range *i.validEnvironments {
-		if strings.ToUpper(environment) == strings.ToUpper(currentEnvironment) {
+		if strings.ToUpper(environment) == CurrentEnvironment() {
 			return true
 		}
 	}
@@ -154,7 +154,7 @@ func (i Integration) modeIsValid() bool {
 	}
 
 	for _, mode := range *i.validModes {
-		if strings.ToUpper(mode) == strings.ToUpper(currentMode) {
+		if strings.ToUpper(mode) == CurrentMode() {
 			return true
 		}
 	}

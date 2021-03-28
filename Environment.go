@@ -10,20 +10,20 @@ var currentEnvironment string
 type Environment string
 
 const (
-	EnvironmentTest Environment = "test"
-	EnvironmentLive Environment = "live"
+	EnvironmentTest Environment = "TEST"
+	EnvironmentLive Environment = "LIVE"
 )
 
 func IsEnvironmentTest() bool {
-	return currentEnvironment == string(EnvironmentTest)
+	return CurrentEnvironment() == string(EnvironmentTest)
 }
 
 func IsEnvironmentLive() bool {
-	return currentEnvironment == string(EnvironmentLive)
+	return CurrentEnvironment() == string(EnvironmentLive)
 }
 
 func IsEnvironment(environment string) bool {
-	return strings.ToUpper(currentEnvironment) == strings.ToUpper(environment)
+	return CurrentEnvironment() == strings.ToUpper(environment)
 }
 
 func CurrentEnvironment() string {
