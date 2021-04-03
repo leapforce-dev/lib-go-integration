@@ -7,11 +7,17 @@ type Table struct {
 	Merge   *TableMerge
 }
 
+type Where struct {
+	FieldName       string
+	ValueExpression string
+}
+
 type TableReplace struct {
 	DateRangeField *string
 	DateField      *string
+	Wheres         *[]Where
 }
 
 type TableMerge struct {
-	IDField string
+	JoinFields []string
 }
