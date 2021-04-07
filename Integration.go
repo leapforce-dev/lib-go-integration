@@ -16,14 +16,16 @@ type Integration struct {
 }
 
 type IntegrationConfig struct {
-	HasEnvironment     *bool //default true
-	HasEnvironmentTest *bool //default true
-	HasEnvironmentLive *bool //default true
-	OtherEnvironments  *[]string
-	HasMode            *bool //default true
-	HasModeRecent      *bool //default true
-	HasModeHistory     *bool //default true
-	OtherModes         *[]string
+	HasEnvironment            *bool //default true
+	HasEnvironmentTest        *bool //default true
+	HasEnvironmentLive        *bool //default true
+	OtherEnvironments         *[]string
+	HasMode                   *bool //default true
+	HasModeRecent             *bool //default true
+	HasModeHistory            *bool //default true
+	OtherModes                *[]string
+	OtherCompulsoryArguments  *[]*string
+	OtherFacultativeArguments *[]*string
 }
 
 func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errortools.Error) {
@@ -92,16 +94,30 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 	}
 
 	var arguments []*string
+	var required int = 0
 
 	if integration.validModes != nil {
 		arguments = append(arguments, &currentMode)
+		required++
 	}
 	if integration.validEnvironments != nil {
 		arguments = append(arguments, &currentEnvironment)
+		required++
+	}
+	if integrationConfig.OtherCompulsoryArguments != nil {
+		for i := range *integrationConfig.OtherCompulsoryArguments {
+			arguments = append(arguments, (*integrationConfig.OtherCompulsoryArguments)[i])
+			required++
+		}
+	}
+	if integrationConfig.OtherFacultativeArguments != nil {
+		for i := range *integrationConfig.OtherFacultativeArguments {
+			arguments = append(arguments, (*integrationConfig.OtherFacultativeArguments)[i])
+		}
 	}
 
 	if len(arguments) > 0 {
-		e := utilities.GetArguments(arguments...)
+		e := utilities.GetArguments(&required, arguments...)
 		if e != nil {
 			return nil, e
 		}

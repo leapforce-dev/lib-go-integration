@@ -1,6 +1,9 @@
 package integration
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 var currentMode string
 
@@ -19,8 +22,8 @@ func IsModeHistory() bool {
 	return currentMode == string(ModeHistory)
 }
 
-func IsMode(mode string) bool {
-	return strings.ToUpper(currentMode) == strings.ToUpper(mode)
+func IsMode(mode interface{}) bool {
+	return strings.ToUpper(currentMode) == strings.ToUpper(fmt.Sprintf("%v", mode))
 }
 
 func modeIsValid() bool {
