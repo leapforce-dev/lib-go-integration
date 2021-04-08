@@ -104,15 +104,17 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		arguments = append(arguments, &currentEnvironment)
 		required++
 	}
-	if integrationConfig.OtherCompulsoryArguments != nil {
-		for i := range *integrationConfig.OtherCompulsoryArguments {
-			arguments = append(arguments, (*integrationConfig.OtherCompulsoryArguments)[i])
-			required++
+	if integrationConfig != nil {
+		if integrationConfig.OtherCompulsoryArguments != nil {
+			for i := range *integrationConfig.OtherCompulsoryArguments {
+				arguments = append(arguments, (*integrationConfig.OtherCompulsoryArguments)[i])
+				required++
+			}
 		}
-	}
-	if integrationConfig.OtherFacultativeArguments != nil {
-		for i := range *integrationConfig.OtherFacultativeArguments {
-			arguments = append(arguments, (*integrationConfig.OtherFacultativeArguments)[i])
+		if integrationConfig.OtherFacultativeArguments != nil {
+			for i := range *integrationConfig.OtherFacultativeArguments {
+				arguments = append(arguments, (*integrationConfig.OtherFacultativeArguments)[i])
+			}
 		}
 	}
 
