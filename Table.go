@@ -1,10 +1,11 @@
 package integration
 
 type Table struct {
-	Name    string
-	Schema  interface{}
-	Replace *TableReplace
-	Merge   *TableMerge
+	Name     string
+	Schema   interface{}
+	Replace  *TableReplace
+	Merge    *TableMerge
+	Truncate *TableTruncate
 }
 
 type Where struct {
@@ -20,4 +21,7 @@ type TableReplace struct {
 
 type TableMerge struct {
 	JoinFields []string
+}
+
+type TableTruncate struct {
 }
