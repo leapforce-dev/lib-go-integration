@@ -1,21 +1,34 @@
 package integration
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"cloud.google.com/go/civil"
 	errortools "github.com/leapforce-libraries/go_errortools"
+	credentials "github.com/leapforce-libraries/go_google/credentials"
+	gcs "github.com/leapforce-libraries/go_googlecloudstorage"
+	go_types "github.com/leapforce-libraries/go_types"
 	utilities "github.com/leapforce-libraries/go_utilities"
 )
 
+const (
+	gcsBucketName string = "leapforce_xxx_log"
+)
+
 type Integration struct {
+	appName           string
+	run               string
+	logger            *gcs.Logger
 	validEnvironments *[]string
 	validModes        *[]string
 }
 
 type IntegrationConfig struct {
+	AppName                   string
+	CredentialsJSON           *credentials.CredentialsJSON
 	HasEnvironment            *bool //default true
 	HasEnvironmentTest        *bool //default true
 	HasEnvironmentLive        *bool //default true
@@ -29,6 +42,21 @@ type IntegrationConfig struct {
 }
 
 func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errortools.Error) {
+	gcsServiceConfig := gcs.ServiceConfig{
+		BucketName:      gcsBucketName,
+		CredentialsJSON: integrationConfig.CredentialsJSON,
+	}
+	gcsService, e := gcs.NewService(&gcsServiceConfig)
+	if e != nil {
+		return nil, e
+	}
+
+	objectName := fmt.Sprintf("%s_%s", integrationConfig.AppName, time.Now().Format("20060102150405"))
+	logger, e := gcsService.NewLogger(objectName, &Log{})
+	if e != nil {
+		return nil, e
+	}
+
 	var validEnvironments, validModes *[]string = &[]string{}, &[]string{}
 
 	var hasEnvironment, hasEnvironmentTest, hasEnvironmentLive bool = true, true, true
@@ -88,7 +116,11 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		validModes = nil
 	}
 
+	guid := go_types.NewGUID()
 	integration := Integration{
+		appName:           integrationConfig.AppName,
+		run:               guid.String(),
+		logger:            logger,
 		validEnvironments: validEnvironments,
 		validModes:        validModes,
 	}
@@ -135,6 +167,12 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 
 	integration.SetToday()
 
+	//write start
+	e = integration.start()
+	if e != nil {
+		return nil, e
+	}
+
 	return &integration, nil
 }
 
@@ -178,4 +216,41 @@ func (i Integration) modeIsValid() bool {
 	}
 
 	return false
+}
+
+func (i Integration) start() *errortools.Error {
+	return i.Log("start", nil)
+}
+
+func (i Integration) end() *errortools.Error {
+	return i.Log("end", nil)
+}
+
+func (i Integration) Log(operation string, data interface{}) *errortools.Error {
+	log := Log{
+		AppName:     i.appName,
+		Environment: CurrentEnvironment(),
+		Mode:        CurrentMode(),
+		Run:         i.run,
+		Timestamp:   time.Now(),
+		Operation:   operation,
+	}
+
+	if !utilities.IsNil(data) {
+		b, err := json.Marshal(data)
+		if err != nil {
+			return errortools.ErrorMessage(err)
+		}
+		log.Data = b
+	}
+
+	return i.logger.Write(&log)
+}
+
+func (i Integration) Close() *errortools.Error {
+	e := i.end()
+	if e != nil {
+		return e
+	}
+	return i.logger.Close()
 }
