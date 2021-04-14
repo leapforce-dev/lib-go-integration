@@ -129,6 +129,7 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		logger:            logger,
 		validEnvironments: validEnvironments,
 		validModes:        validModes,
+		organisationID:    integrationConfig.OrganisationID,
 	}
 
 	var arguments []*string
