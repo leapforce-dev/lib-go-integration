@@ -246,7 +246,7 @@ func (i Integration) Log(operation string, organisationID *int64, data interface
 		Run:            i.run,
 		Timestamp:      time.Now(),
 		Operation:      operation,
-		OrganisationID: organisationID,
+		OrganisationID: go_bigquery.Int64ToNullInt64(organisationID),
 	}
 
 	if !utilities.IsNil(data) {

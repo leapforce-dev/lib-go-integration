@@ -3,6 +3,8 @@ package integration
 import (
 	"encoding/json"
 	"time"
+
+	"cloud.google.com/go/bigquery"
 )
 
 type Log struct {
@@ -12,6 +14,6 @@ type Log struct {
 	Run            string
 	Timestamp      time.Time
 	Operation      string
-	OrganisationID *int64
+	OrganisationID bigquery.NullInt64
 	Data           json.RawMessage
 }
