@@ -6,11 +6,12 @@ import (
 )
 
 type Log struct {
-	AppName     string
-	Environment string
-	Mode        string
-	Run         string
-	Timestamp   time.Time
-	Operation   string
-	Data        json.RawMessage
+	AppName        string
+	Environment    string
+	Mode           string
+	Run            string
+	Timestamp      time.Time
+	Operation      string
+	OrganisationID int64
+	Data           json.RawMessage
 }
