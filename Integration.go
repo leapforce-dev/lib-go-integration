@@ -8,6 +8,7 @@ import (
 
 	"cloud.google.com/go/civil"
 	errortools "github.com/leapforce-libraries/go_errortools"
+	go_bigquery "github.com/leapforce-libraries/go_google/bigquery"
 	credentials "github.com/leapforce-libraries/go_google/credentials"
 	gcs "github.com/leapforce-libraries/go_googlecloudstorage"
 	go_types "github.com/leapforce-libraries/go_types"
@@ -15,7 +16,10 @@ import (
 )
 
 const (
-	gcsBucketName string = "leapforce_xxx_log"
+	logBucketName string = "leapforce_xxx_log"
+	logProjectID  string = "leapforce-224115"
+	logDataset    string = "leapforce"
+	logTableName  string = "log"
 )
 
 type Integration struct {
@@ -43,7 +47,7 @@ type IntegrationConfig struct {
 
 func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errortools.Error) {
 	gcsServiceConfig := gcs.ServiceConfig{
-		BucketName:      gcsBucketName,
+		BucketName:      logBucketName,
 		CredentialsJSON: integrationConfig.CredentialsJSON,
 	}
 	gcsService, e := gcs.NewService(&gcsServiceConfig)
@@ -256,10 +260,42 @@ func (i Integration) Log(operation string, organisationID *int64, data interface
 	return i.logger.Write(&log)
 }
 
-func (i Integration) Close() *errortools.Error {
+func (i Integration) Close(credentialsJSON *credentials.CredentialsJSON) *errortools.Error {
 	e := i.end()
 	if e != nil {
 		return e
 	}
-	return i.logger.Close()
+
+	e = i.logger.Close()
+	if e != nil {
+		return e
+	}
+
+	if credentialsJSON == nil {
+		fmt.Println("No logging to bigquery since credentialsJSON is nil")
+		return nil
+	}
+
+	bigQueryServiceConfig := go_bigquery.ServiceConfig{
+		CredentialsJSON: credentialsJSON,
+		ProjectID:       logProjectID,
+	}
+	bigQueryService, e := go_bigquery.NewService(&bigQueryServiceConfig)
+	if e != nil {
+		errortools.CaptureError(e)
+	}
+
+	tableName := logTableName
+	sqlConfig := go_bigquery.SQLConfig{
+		DatasetName:     logDataset,
+		TableOrViewName: &tableName,
+		ModelOrSchema:   Log{},
+	}
+
+	e = i.logger.ToBigQuery(bigQueryService, &sqlConfig, false, true)
+	if e != nil {
+		errortools.CaptureError(e)
+	}
+
+	return nil
 }
