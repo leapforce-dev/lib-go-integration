@@ -28,14 +28,16 @@ type Integration struct {
 	logger            *gcs.Logger
 	validEnvironments *[]string
 	validModes        *[]string
+	organisationID    *int64
 }
 
 type IntegrationConfig struct {
 	AppName                   string
 	CredentialsJSON           *credentials.CredentialsJSON
-	HasEnvironment            *bool //default true
-	HasEnvironmentTest        *bool //default true
-	HasEnvironmentLive        *bool //default true
+	OrganisationID            *int64 // if the integration runs for a single organisation pass it's ID here
+	HasEnvironment            *bool  //default true
+	HasEnvironmentTest        *bool  //default true
+	HasEnvironmentLive        *bool  //default true
 	OtherEnvironments         *[]string
 	HasMode                   *bool //default true
 	HasModeRecent             *bool //default true
@@ -239,6 +241,10 @@ func (i Integration) end() *errortools.Error {
 }
 
 func (i Integration) Log(operation string, organisationID *int64, data interface{}) *errortools.Error {
+	if organisationID == nil {
+		organisationID = i.organisationID
+	}
+
 	log := Log{
 		AppName:        i.appName,
 		Environment:    CurrentEnvironment(),
