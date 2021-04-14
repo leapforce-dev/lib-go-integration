@@ -267,7 +267,7 @@ func (i Integration) Log(operation string, organisationID *int64, data interface
 	return i.logger.Write(&log)
 }
 
-func (i Integration) Close(credentialsJSON *credentials.CredentialsJSON) *errortools.Error {
+func (i Integration) Close() *errortools.Error {
 	e := i.end()
 	if e != nil {
 		return e
@@ -276,32 +276,6 @@ func (i Integration) Close(credentialsJSON *credentials.CredentialsJSON) *errort
 	e = i.logger.Close()
 	if e != nil {
 		return e
-	}
-
-	if credentialsJSON == nil {
-		fmt.Println("No logging to bigquery since credentialsJSON is nil")
-		return nil
-	}
-
-	bigQueryServiceConfig := go_bigquery.ServiceConfig{
-		CredentialsJSON: credentialsJSON,
-		ProjectID:       logProjectID,
-	}
-	bigQueryService, e := go_bigquery.NewService(&bigQueryServiceConfig)
-	if e != nil {
-		errortools.CaptureError(e)
-	}
-
-	tableName := logTableName
-	sqlConfig := go_bigquery.SQLConfig{
-		DatasetName:     logDataset,
-		TableOrViewName: &tableName,
-		ModelOrSchema:   Log{},
-	}
-
-	e = i.logger.ToBigQuery(bigQueryService, &sqlConfig, false, true)
-	if e != nil {
-		errortools.CaptureError(e)
 	}
 
 	return nil
