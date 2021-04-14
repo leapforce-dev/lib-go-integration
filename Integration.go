@@ -219,11 +219,11 @@ func (i Integration) modeIsValid() bool {
 }
 
 func (i Integration) StartOrganisation(organisationID int64) *errortools.Error {
-	return i.Log("start_organisation", nil, &organisationID)
+	return i.Log("start_organisation", &organisationID, nil)
 }
 
 func (i Integration) EndOrganisation(organisationID int64) *errortools.Error {
-	return i.Log("end_organisation", nil, &organisationID)
+	return i.Log("end_organisation", &organisationID, nil)
 }
 
 func (i Integration) start() *errortools.Error {
