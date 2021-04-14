@@ -218,22 +218,31 @@ func (i Integration) modeIsValid() bool {
 	return false
 }
 
+func (i Integration) StartOrganisation(organisationID int64) *errortools.Error {
+	return i.Log("start_organisation", nil, &organisationID)
+}
+
+func (i Integration) EndOrganisation(organisationID int64) *errortools.Error {
+	return i.Log("end_organisation", nil, &organisationID)
+}
+
 func (i Integration) start() *errortools.Error {
-	return i.Log("start", nil)
+	return i.Log("start", nil, nil)
 }
 
 func (i Integration) end() *errortools.Error {
-	return i.Log("end", nil)
+	return i.Log("end", nil, nil)
 }
 
-func (i Integration) Log(operation string, data interface{}) *errortools.Error {
+func (i Integration) Log(operation string, organisationID *int64, data interface{}) *errortools.Error {
 	log := Log{
-		AppName:     i.appName,
-		Environment: CurrentEnvironment(),
-		Mode:        CurrentMode(),
-		Run:         i.run,
-		Timestamp:   time.Now(),
-		Operation:   operation,
+		AppName:        i.appName,
+		Environment:    CurrentEnvironment(),
+		Mode:           CurrentMode(),
+		Run:            i.run,
+		Timestamp:      time.Now(),
+		Operation:      operation,
+		OrganisationID: organisationID,
 	}
 
 	if !utilities.IsNil(data) {

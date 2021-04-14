@@ -12,6 +12,6 @@ type Log struct {
 	Run            string
 	Timestamp      time.Time
 	Operation      string
-	OrganisationID int64
+	OrganisationID *int64
 	Data           json.RawMessage
 }
