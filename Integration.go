@@ -25,6 +25,7 @@ const (
 
 type Integration struct {
 	config            *Config
+	configName        string
 	run               string
 	logger            *gcs.Logger
 	validEnvironments *[]string
@@ -35,7 +36,7 @@ type Integration struct {
 
 type IntegrationConfig struct {
 	DefaultConfig             *Config
-	OtherConfigs              []*Config
+	OtherConfigs              map[string]*Config
 	LogCredentials            *credentials.CredentialsJSON
 	LogOrganisationID         *int64 // if the integration runs for a single organisation pass it's ID here
 	HasEnvironment            *bool  //default true
@@ -150,15 +151,16 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 
 	// extract config
 	var config *Config = nil
+	var configName string = "default"
 	if prefixArguments != nil {
-		configName, ok := (*prefixArguments)["c"]
+		_configName, ok := (*prefixArguments)["c"]
 		if ok {
-			for i, c := range integrationConfig.OtherConfigs {
-				if strings.ToLower(c.Name) == strings.ToLower(configName) {
-					config = integrationConfig.OtherConfigs[i]
-					break
-				}
+			_config, okConfig := integrationConfig.OtherConfigs[strings.ToLower(configName)]
+			if okConfig {
+				config = _config
+				configName = _configName
 			}
+
 			if config == nil {
 				return nil, errortools.ErrorMessage(fmt.Sprintf("Config '%s' not found", configName))
 			}
@@ -202,6 +204,7 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 	guid := go_types.NewGUID()
 	integration := Integration{
 		config:            config,
+		configName:        configName,
 		run:               guid.String(),
 		logger:            logger,
 		validEnvironments: validEnvironments,
@@ -236,7 +239,7 @@ func (i Integration) Print() {
 	if i.validEnvironments != nil {
 		fmt.Printf(">>> Environment : %s\n", CurrentEnvironment())
 	}
-	fmt.Printf(">>> Config : %s\n", i.config.Name)
+	fmt.Printf(">>> Config : %s\n", i.configName)
 }
 
 func (i Integration) SetToday() {
