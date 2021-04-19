@@ -9,4 +9,5 @@ type Config struct {
 	Dataset               string
 	SentryDSN             string
 	ServiceAccountJSONKey *credentials.CredentialsJSON
+	OrganisationIDs       *[]int64 // if nil, app runs for all organisationIDs not specified in any config from OtherConfigs
 }

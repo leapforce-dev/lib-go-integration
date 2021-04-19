@@ -3,7 +3,6 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -24,14 +23,15 @@ const (
 )
 
 type Integration struct {
-	config            *Config
-	configName        string
-	run               string
-	logger            *gcs.Logger
-	validEnvironments *[]string
-	validModes        *[]string
-	logOrganisationID *int64
-	organisationID    *int64
+	config                 *Config
+	configName             string
+	run                    string
+	logger                 *gcs.Logger
+	validEnvironments      *[]string
+	validModes             *[]string
+	logOrganisationID      *int64
+	includeOrganisationIDs *[]int64
+	excludeOrganisationIDs *[]int64
 }
 
 type IntegrationConfig struct {
@@ -155,7 +155,7 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 	if prefixArguments != nil {
 		_configName, ok := (*prefixArguments)["c"]
 		if ok {
-			_config, okConfig := integrationConfig.OtherConfigs[strings.ToLower(configName)]
+			_config, okConfig := integrationConfig.OtherConfigs[strings.ToLower(_configName)]
 			if okConfig {
 				config = _config
 				configName = _configName
@@ -173,19 +173,6 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		config = integrationConfig.DefaultConfig
 	}
 
-	// extract organisationID
-	var organisationID int64
-	if prefixArguments != nil {
-		organisationIDString, ok := (*prefixArguments)["o"]
-		if ok {
-			_organisationID, err := strconv.ParseInt(organisationIDString, 10, 64)
-			if err != nil {
-				return nil, errortools.ErrorMessage("OrganisationID must be an integer")
-			}
-			organisationID = _organisationID
-		}
-	}
-
 	gcsServiceConfig := gcs.ServiceConfig{
 		BucketName:      logBucketName,
 		CredentialsJSON: integrationConfig.LogCredentials,
@@ -201,16 +188,29 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		return nil, e
 	}
 
+	var excludeOrganisationIDs *[]int64 = nil
+	if len(integrationConfig.OtherConfigs) > 0 {
+		excludeOrganisationIDs = new([]int64)
+		for _, c := range integrationConfig.OtherConfigs {
+			if c.OrganisationIDs != nil {
+				for _, o := range *c.OrganisationIDs {
+					*excludeOrganisationIDs = append((*excludeOrganisationIDs), o)
+				}
+			}
+		}
+	}
+
 	guid := go_types.NewGUID()
 	integration := Integration{
-		config:            config,
-		configName:        configName,
-		run:               guid.String(),
-		logger:            logger,
-		validEnvironments: validEnvironments,
-		validModes:        validModes,
-		logOrganisationID: integrationConfig.LogOrganisationID,
-		organisationID:    &organisationID,
+		config:                 config,
+		configName:             configName,
+		run:                    guid.String(),
+		logger:                 logger,
+		validEnvironments:      validEnvironments,
+		validModes:             validModes,
+		logOrganisationID:      integrationConfig.LogOrganisationID,
+		includeOrganisationIDs: config.OrganisationIDs,
+		excludeOrganisationIDs: excludeOrganisationIDs,
 	}
 
 	if !integration.environmentIsValid() {
@@ -240,6 +240,33 @@ func (i Integration) Print() {
 		fmt.Printf(">>> Environment : %s\n", CurrentEnvironment())
 	}
 	fmt.Printf(">>> Config : %s\n", i.configName)
+}
+
+func (i Integration) Config() *Config {
+	return i.config
+}
+
+func (i Integration) DoOrganisation(organisationID int64) bool {
+	if i.includeOrganisationIDs != nil {
+		for _, o := range *i.includeOrganisationIDs {
+			if o == organisationID {
+				return true
+			}
+		}
+
+		return false
+	}
+	if i.excludeOrganisationIDs != nil {
+		for _, o := range *i.excludeOrganisationIDs {
+			if o == organisationID {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	return true
 }
 
 func (i Integration) SetToday() {
