@@ -3,6 +3,7 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,18 +24,20 @@ const (
 )
 
 type Integration struct {
-	appName           string
+	config            *Config
 	run               string
 	logger            *gcs.Logger
 	validEnvironments *[]string
 	validModes        *[]string
+	logOrganisationID *int64
 	organisationID    *int64
 }
 
 type IntegrationConfig struct {
-	AppName                   string
-	CredentialsJSON           *credentials.CredentialsJSON
-	OrganisationID            *int64 // if the integration runs for a single organisation pass it's ID here
+	DefaultConfig             *Config
+	OtherConfigs              []*Config
+	LogCredentials            *credentials.CredentialsJSON
+	LogOrganisationID         *int64 // if the integration runs for a single organisation pass it's ID here
 	HasEnvironment            *bool  //default true
 	HasEnvironmentTest        *bool  //default true
 	HasEnvironmentLive        *bool  //default true
@@ -48,21 +51,13 @@ type IntegrationConfig struct {
 }
 
 func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errortools.Error) {
-	gcsServiceConfig := gcs.ServiceConfig{
-		BucketName:      logBucketName,
-		CredentialsJSON: integrationConfig.CredentialsJSON,
-	}
-	gcsService, e := gcs.NewService(&gcsServiceConfig)
-	if e != nil {
-		return nil, e
+	if integrationConfig == nil {
+		return nil, errortools.ErrorMessage("IntegrationConfig is nil pointer")
 	}
 
-	objectName := fmt.Sprintf("%s_%s", integrationConfig.AppName, time.Now().Format("20060102150405"))
-	logger, e := gcsService.NewLogger(objectName, &Log{})
-	if e != nil {
-		return nil, e
-	}
-
+	//if integrationConfig.Config.ServiceAccountJSONKey == nil {
+	//	return nil, errortools.ErrorMessage("ServiceAccountJSONKey is nil pointer")
+	//}
 	var validEnvironments, validModes *[]string = &[]string{}, &[]string{}
 
 	var hasEnvironment, hasEnvironmentTest, hasEnvironmentLive bool = true, true, true
@@ -122,24 +117,14 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		validModes = nil
 	}
 
-	guid := go_types.NewGUID()
-	integration := Integration{
-		appName:           integrationConfig.AppName,
-		run:               guid.String(),
-		logger:            logger,
-		validEnvironments: validEnvironments,
-		validModes:        validModes,
-		organisationID:    integrationConfig.OrganisationID,
-	}
-
 	var arguments []*string
 	var required int = 0
 
-	if integration.validModes != nil {
+	if validModes != nil {
 		arguments = append(arguments, &currentMode)
 		required++
 	}
-	if integration.validEnvironments != nil {
+	if validEnvironments != nil {
 		arguments = append(arguments, &currentEnvironment)
 		required++
 	}
@@ -157,11 +142,72 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		}
 	}
 
-	if len(arguments) > 0 {
-		e := utilities.GetArguments(&required, arguments...)
-		if e != nil {
-			return nil, e
+	//if len(arguments) > 0 {
+	prefixArguments, e := utilities.GetArguments(&required, arguments...)
+	if e != nil {
+		return nil, e
+	}
+
+	// extract config
+	var config *Config = nil
+	if prefixArguments != nil {
+		configName, ok := (*prefixArguments)["c"]
+		if ok {
+			for i, c := range integrationConfig.OtherConfigs {
+				if strings.ToLower(c.Name) == strings.ToLower(configName) {
+					config = integrationConfig.OtherConfigs[i]
+					break
+				}
+			}
+			if config == nil {
+				return nil, errortools.ErrorMessage(fmt.Sprintf("Config '%s' not found", configName))
+			}
 		}
+	}
+	if config == nil {
+		if integrationConfig.DefaultConfig == nil {
+			return nil, errortools.ErrorMessage("DefaultConfig is nil")
+		}
+		config = integrationConfig.DefaultConfig
+	}
+
+	// extract organisationID
+	var organisationID int64
+	if prefixArguments != nil {
+		organisationIDString, ok := (*prefixArguments)["o"]
+		if ok {
+			_organisationID, err := strconv.ParseInt(organisationIDString, 10, 64)
+			if err != nil {
+				return nil, errortools.ErrorMessage("OrganisationID must be an integer")
+			}
+			organisationID = _organisationID
+		}
+	}
+
+	gcsServiceConfig := gcs.ServiceConfig{
+		BucketName:      logBucketName,
+		CredentialsJSON: integrationConfig.LogCredentials,
+	}
+	gcsService, e := gcs.NewService(&gcsServiceConfig)
+	if e != nil {
+		return nil, e
+	}
+
+	objectName := fmt.Sprintf("%s_%s", config.AppName, time.Now().Format("20060102150405"))
+	logger, e := gcsService.NewLogger(objectName, &Log{})
+	if e != nil {
+		return nil, e
+	}
+
+	guid := go_types.NewGUID()
+	integration := Integration{
+		config:            config,
+		run:               guid.String(),
+		logger:            logger,
+		validEnvironments: validEnvironments,
+		validModes:        validModes,
+		logOrganisationID: integrationConfig.LogOrganisationID,
+		organisationID:    &organisationID,
 	}
 
 	if !integration.environmentIsValid() {
@@ -190,6 +236,7 @@ func (i Integration) Print() {
 	if i.validEnvironments != nil {
 		fmt.Printf(">>> Environment : %s\n", CurrentEnvironment())
 	}
+	fmt.Printf(">>> Config : %s\n", i.config.Name)
 }
 
 func (i Integration) SetToday() {
@@ -243,11 +290,11 @@ func (i Integration) end() *errortools.Error {
 
 func (i Integration) Log(operation string, organisationID *int64, data interface{}) *errortools.Error {
 	if organisationID == nil {
-		organisationID = i.organisationID
+		organisationID = i.logOrganisationID
 	}
 
 	log := Log{
-		AppName:        i.appName,
+		AppName:        i.config.AppName,
 		Environment:    CurrentEnvironment(),
 		Mode:           CurrentMode(),
 		Run:            i.run,
