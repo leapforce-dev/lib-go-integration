@@ -1,11 +1,21 @@
 package integration
 
+type Granularity string
+
+const (
+	GranularityNone  Granularity = ""
+	GranularityDay   Granularity = "day"
+	GranularityWeek  Granularity = "week"
+	GranularityMonth Granularity = "month"
+)
+
 type Table struct {
-	Name     string
-	Schema   interface{}
-	Replace  *TableReplace
-	Merge    *TableMerge
-	Truncate *TableTruncate
+	Name        string
+	Granularity Granularity
+	Schema      interface{}
+	Replace     *TableReplace
+	Merge       *TableMerge
+	Truncate    *TableTruncate
 }
 
 type Where struct {
