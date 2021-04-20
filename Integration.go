@@ -26,6 +26,7 @@ type Integration struct {
 	config                 *Config
 	configName             string
 	run                    string
+	logCredentials         *credentials.CredentialsJSON
 	logger                 *gcs.Logger
 	validEnvironments      *[]string
 	validModes             *[]string
@@ -173,21 +174,6 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		config = integrationConfig.DefaultConfig
 	}
 
-	gcsServiceConfig := gcs.ServiceConfig{
-		BucketName:      logBucketName,
-		CredentialsJSON: integrationConfig.LogCredentials,
-	}
-	gcsService, e := gcs.NewService(&gcsServiceConfig)
-	if e != nil {
-		return nil, e
-	}
-
-	objectName := fmt.Sprintf("%s_%s", config.AppName, time.Now().Format("20060102150405"))
-	logger, e := gcsService.NewLogger(objectName, &Log{})
-	if e != nil {
-		return nil, e
-	}
-
 	var excludeOrganisationIDs *[]int64 = nil
 	if len(integrationConfig.OtherConfigs) > 0 {
 		excludeOrganisationIDs = new([]int64)
@@ -205,10 +191,11 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		config:                 config,
 		configName:             configName,
 		run:                    guid.String(),
-		logger:                 logger,
+		logCredentials:         integrationConfig.LogCredentials,
 		validEnvironments:      validEnvironments,
 		validModes:             validModes,
 		logOrganisationID:      integrationConfig.LogOrganisationID,
+		logger:                 nil,
 		includeOrganisationIDs: config.OrganisationIDs,
 		excludeOrganisationIDs: excludeOrganisationIDs,
 	}
@@ -223,6 +210,14 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 
 	integration.SetToday()
 
+	fmt.Println(integration.logger)
+
+	//init logger
+	e = integration.initLogger()
+	if e != nil {
+		return nil, e
+	}
+
 	//write start
 	e = integration.start()
 	if e != nil {
@@ -230,6 +225,27 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 	}
 
 	return &integration, nil
+}
+
+func (i *Integration) initLogger() *errortools.Error {
+	gcsServiceConfig := gcs.ServiceConfig{
+		BucketName:      logBucketName,
+		CredentialsJSON: i.logCredentials,
+	}
+	gcsService, e := gcs.NewService(&gcsServiceConfig)
+	if e != nil {
+		return e
+	}
+
+	objectName := fmt.Sprintf("%s_%s", i.Config().AppName, time.Now().Format("20060102150405"))
+	logger, e := gcsService.NewLogger(objectName, &Log{})
+	if e != nil {
+		return e
+	}
+
+	i.logger = logger
+
+	return nil
 }
 
 func (i Integration) Print() {
@@ -322,6 +338,9 @@ func (i Integration) Log(operation string, organisationID *int64, data interface
 	if organisationID == nil {
 		organisationID = i.logOrganisationID
 	}
+	if i.logger == nil {
+		return errortools.ErrorMessage("Logger not initialized")
+	}
 
 	log := Log{
 		AppName:        i.config.AppName,
@@ -342,6 +361,28 @@ func (i Integration) Log(operation string, organisationID *int64, data interface
 	}
 
 	return i.logger.Write(&log)
+}
+
+func (i *Integration) SaveLog(reInit bool) *errortools.Error {
+	if i.logger == nil {
+		return errortools.ErrorMessage("Logger not initialized")
+	}
+
+	e := i.logger.Close()
+	if e != nil {
+		return e
+	}
+
+	i.logger = nil
+
+	if reInit {
+		e = i.initLogger()
+		if e != nil {
+			return e
+		}
+	}
+
+	return nil
 }
 
 func (i Integration) Close() *errortools.Error {
