@@ -210,8 +210,6 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 
 	integration.SetToday()
 
-	fmt.Println(integration.logger)
-
 	//init logger
 	e = integration.initLogger()
 	if e != nil {
