@@ -14,6 +14,7 @@ type Config struct {
 	SentryDSN             string
 	settings              map[string]string
 	ServiceAccountJSONKey *credentials.CredentialsJSON
+	LogOrganisationID     *int64   // if the integration runs for a single organisation pass it's ID here
 	OrganisationIDs       *[]int64 // if nil, app runs for all organisationIDs not specified in any config from OtherConfigs
 }
 

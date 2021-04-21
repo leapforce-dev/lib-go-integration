@@ -30,7 +30,6 @@ type Integration struct {
 	logger                 *gcs.Logger
 	validEnvironments      *[]string
 	validModes             *[]string
-	logOrganisationID      *int64
 	includeOrganisationIDs *[]int64
 	excludeOrganisationIDs *[]int64
 }
@@ -39,10 +38,9 @@ type IntegrationConfig struct {
 	DefaultConfig             *Config
 	OtherConfigs              map[string]*Config
 	LogCredentials            *credentials.CredentialsJSON
-	LogOrganisationID         *int64 // if the integration runs for a single organisation pass it's ID here
-	HasEnvironment            *bool  //default true
-	HasEnvironmentTest        *bool  //default true
-	HasEnvironmentLive        *bool  //default true
+	HasEnvironment            *bool //default true
+	HasEnvironmentTest        *bool //default true
+	HasEnvironmentLive        *bool //default true
 	OtherEnvironments         *[]string
 	HasMode                   *bool //default true
 	HasModeRecent             *bool //default true
@@ -57,9 +55,6 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		return nil, errortools.ErrorMessage("IntegrationConfig is nil pointer")
 	}
 
-	//if integrationConfig.Config.ServiceAccountJSONKey == nil {
-	//	return nil, errortools.ErrorMessage("ServiceAccountJSONKey is nil pointer")
-	//}
 	var validEnvironments, validModes *[]string = &[]string{}, &[]string{}
 
 	var hasEnvironment, hasEnvironmentTest, hasEnvironmentLive bool = true, true, true
@@ -194,7 +189,6 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		logCredentials:         integrationConfig.LogCredentials,
 		validEnvironments:      validEnvironments,
 		validModes:             validModes,
-		logOrganisationID:      integrationConfig.LogOrganisationID,
 		logger:                 nil,
 		includeOrganisationIDs: config.OrganisationIDs,
 		excludeOrganisationIDs: excludeOrganisationIDs,
@@ -334,7 +328,7 @@ func (i Integration) end() *errortools.Error {
 
 func (i Integration) Log(operation string, organisationID *int64, data interface{}) *errortools.Error {
 	if organisationID == nil {
-		organisationID = i.logOrganisationID
+		organisationID = i.config.LogOrganisationID
 	}
 	if i.logger == nil {
 		return errortools.ErrorMessage("Logger not initialized")
