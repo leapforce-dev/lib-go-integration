@@ -35,3 +35,13 @@ func (config *Config) Get(key interface{}) (string, bool) {
 
 	return value, ok
 }
+
+func (config *Config) FullTableName(tableName string, quoted bool) string {
+	_tableName := fmt.Sprintf("%s.%s.%s", config.ProjectID, config.Dataset, tableName)
+
+	if quoted {
+		_tableName = fmt.Sprintf("`%s`", _tableName)
+	}
+
+	return _tableName
+}
