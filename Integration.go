@@ -220,9 +220,10 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 }
 
 func (i *Integration) initLogger() *errortools.Error {
+	bucketName := logBucketName
 	gcsServiceConfig := gcs.ServiceConfig{
-		BucketName:      logBucketName,
-		CredentialsJSON: i.logCredentials,
+		DefaultBucketName: &bucketName,
+		CredentialsJSON:   i.logCredentials,
 	}
 	gcsService, e := gcs.NewService(&gcsServiceConfig)
 	if e != nil {
