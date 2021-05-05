@@ -279,8 +279,10 @@ func (i Integration) DoOrganisation(organisationID int64) bool {
 }
 
 func (i Integration) SetToday() {
-	date := civil.DateOf(time.Now())
-	today = &date
+	_today := civil.DateOf(time.Now())
+	today = &_today
+	_tomorrow := _today.AddDays(1)
+	tomorrow = &_tomorrow
 }
 
 func (i Integration) environmentIsValid() bool {

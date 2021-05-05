@@ -5,11 +5,20 @@ import (
 )
 
 var today *civil.Date
+var tomorrow *civil.Date
 
 func TodayPtr() *civil.Date {
 	return today
 }
 
 func Today() civil.Date {
+	return *TodayPtr()
+}
+
+func TomorrowPtr() *civil.Date {
+	return today
+}
+
+func Tomorrow() civil.Date {
 	return *TodayPtr()
 }
