@@ -394,7 +394,7 @@ func (i *Integration) SaveLog(reInit bool) *errortools.Error {
 	return nil
 }
 
-func (i Integration) Close() *errortools.Error {
+func (i *Integration) Close() *errortools.Error {
 	e := i.end()
 	if e != nil {
 		return e
