@@ -346,6 +346,7 @@ func (i Integration) Log(operation string, organisationID *int64, data interface
 
 		apis = append(apis, APIInfo{
 			Name:      (*apiService).APIName(),
+			Key:       (*apiService).APIKey(),
 			CallCount: (*apiService).APICallCount(),
 		})
 	}
