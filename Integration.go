@@ -16,10 +16,9 @@ import (
 )
 
 const (
-	logBucketName string = "leapforce_xxx_log"
+	logBucketName string = "leapforce_xxx_log_new"
 	logProjectID  string = "leapforce-224115"
 	logDataset    string = "leapforce"
-	logTableName  string = "log"
 )
 
 type Integration struct {
@@ -32,6 +31,7 @@ type Integration struct {
 	validModes             *[]string
 	includeOrganisationIDs *[]int64
 	excludeOrganisationIDs *[]int64
+	apiServices            []*APIService
 }
 
 type IntegrationConfig struct {
@@ -321,11 +321,11 @@ func (i Integration) EndOrganisation(organisationID int64) *errortools.Error {
 	return i.Log("end_organisation", &organisationID, nil)
 }
 
-func (i Integration) start() *errortools.Error {
+func (i Integration) start(apiServices ...*APIService) *errortools.Error {
 	return i.Log("start", nil, nil)
 }
 
-func (i Integration) end() *errortools.Error {
+func (i Integration) end(apiServices ...*APIService) *errortools.Error {
 	return i.Log("end", nil, nil)
 }
 
@@ -337,6 +337,19 @@ func (i Integration) Log(operation string, organisationID *int64, data interface
 		return errortools.ErrorMessage("Logger not initialized")
 	}
 
+	apis := []APIInfo{}
+
+	for _, apiService := range i.apiServices {
+		if apiService == nil {
+			continue
+		}
+
+		apis = append(apis, APIInfo{
+			Name:      (*apiService).APIName(),
+			CallCount: (*apiService).APICallCount(),
+		})
+	}
+
 	log := Log{
 		AppName:        i.config.AppName,
 		Environment:    CurrentEnvironment(),
@@ -345,6 +358,7 @@ func (i Integration) Log(operation string, organisationID *int64, data interface
 		Timestamp:      time.Now(),
 		Operation:      operation,
 		OrganisationID: go_bigquery.Int64ToNullInt64(organisationID),
+		APIs:           apis,
 	}
 
 	if !utilities.IsNil(data) {
@@ -352,7 +366,7 @@ func (i Integration) Log(operation string, organisationID *int64, data interface
 		if err != nil {
 			return errortools.ErrorMessage(err)
 		}
-		log.Data = b
+		log.Data = string(b)
 	}
 
 	return i.logger.Write(&log)
@@ -392,4 +406,8 @@ func (i Integration) Close() *errortools.Error {
 	}
 
 	return nil
+}
+
+func (i *Integration) APIServices(apiServices ...*APIService) {
+	i.apiServices = apiServices
 }
