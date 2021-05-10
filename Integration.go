@@ -412,3 +412,13 @@ func (i *Integration) Close() *errortools.Error {
 func (i *Integration) APIServices(apiServices ...*APIService) {
 	i.apiServices = apiServices
 }
+
+func (i *Integration) ResetAPIServices() {
+	for _, apiService := range i.apiServices {
+		if apiService == nil {
+			continue
+		}
+
+		(*apiService).APIReset()
+	}
+}
