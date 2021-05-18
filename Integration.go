@@ -422,3 +422,7 @@ func (i *Integration) ResetAPIServices() {
 		(*apiService).APIReset()
 	}
 }
+
+func (i *Integration) Debug(_debug bool) {
+	debug = _debug
+}
