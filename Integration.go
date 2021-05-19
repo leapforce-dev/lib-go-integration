@@ -55,6 +55,8 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		return nil, errortools.ErrorMessage("IntegrationConfig is nil pointer")
 	}
 
+	initDebug()
+
 	var validEnvironments, validModes *[]string = &[]string{}, &[]string{}
 
 	var hasEnvironment, hasEnvironmentTest, hasEnvironmentLive bool = true, true, true
@@ -421,8 +423,4 @@ func (i *Integration) ResetAPIServices() {
 
 		(*apiService).APIReset()
 	}
-}
-
-func (i *Integration) Debug(_debug bool) {
-	debug = _debug
 }
