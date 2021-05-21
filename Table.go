@@ -54,6 +54,20 @@ func (tableReplace *TableReplace) AddWhereDateRange(fieldName string, startDate 
 	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, "BETWEEN", fmt.Sprintf("'%s' AND '%s'", startDate.String(), endDate.String())})
 }
 
+func (tableReplace *TableReplace) AddWhereDates(fieldName string, dates []civil.Date) {
+	if len(dates) == 0 {
+		return
+	}
+
+	var datesString []string
+
+	for _, date := range dates {
+		datesString = append(datesString, date.String())
+	}
+
+	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, "IN", fmt.Sprintf("('%s')", strings.Join(datesString, "','"))})
+}
+
 func (tableReplace *TableReplace) WhereString() *string {
 	if len(tableReplace.wheres) == 0 {
 		return nil
