@@ -3,6 +3,8 @@ package integration
 import (
 	"fmt"
 	"strings"
+
+	"cloud.google.com/go/civil"
 )
 
 type Granularity string
@@ -42,6 +44,14 @@ type TableTruncate struct {
 
 func (tableReplace *TableReplace) AddWhere(fieldName string, operator string, valueExpression string) {
 	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, operator, valueExpression})
+}
+
+func (tableReplace *TableReplace) AddWhereDate(fieldName string, date civil.Date) {
+	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, "=", fmt.Sprintf("'%s'", date.String())})
+}
+
+func (tableReplace *TableReplace) AddWhereDateRange(fieldName string, startDate civil.Date, endDate civil.Date) {
+	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, "BETWEEN", fmt.Sprintf("'%s' AND '%s'", startDate.String(), endDate.String())})
 }
 
 func (tableReplace *TableReplace) WhereString() *string {
