@@ -23,16 +23,14 @@ type Table struct {
 	Truncate    *TableTruncate
 }
 
-type Where struct {
+type where struct {
 	FieldName       string
 	Operator        string
 	ValueExpression string
 }
 
 type TableReplace struct {
-	DateRangeField *string
-	DateField      *string
-	Wheres         *[]Where
+	wheres []where
 }
 
 type TableMerge struct {
@@ -42,14 +40,18 @@ type TableMerge struct {
 type TableTruncate struct {
 }
 
+func (tableReplace *TableReplace) AddWhere(fieldName string, operator string, valueExpression string) {
+	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, operator, valueExpression})
+}
+
 func (tableReplace *TableReplace) WhereString() *string {
-	if tableReplace.Wheres == nil {
+	if len(tableReplace.wheres) == 0 {
 		return nil
 	}
 
 	whereStrings := []string{}
 
-	for _, where := range *tableReplace.Wheres {
+	for _, where := range tableReplace.wheres {
 		fieldName := strings.Trim(where.FieldName, " ")
 		if fieldName == "" {
 			continue
