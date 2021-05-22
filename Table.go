@@ -42,6 +42,10 @@ type TableMerge struct {
 type TableTruncate struct {
 }
 
+func (tableReplace *TableReplace) AddDummy() {
+	tableReplace.wheres = append(tableReplace.wheres, where{"1", "=", "1"})
+}
+
 func (tableReplace *TableReplace) AddWhere(fieldName string, operator string, valueExpression string) {
 	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, operator, valueExpression})
 }
