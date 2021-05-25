@@ -47,20 +47,24 @@ func (tableReplace *TableReplace) Clear() *TableReplace {
 	return tableReplace
 }
 
-func (tableReplace *TableReplace) AddDummy() {
+func (tableReplace *TableReplace) AddDummy() *TableReplace {
 	tableReplace.wheres = append(tableReplace.wheres, where{"1", "=", "1"})
+	return tableReplace
 }
 
-func (tableReplace *TableReplace) AddWhere(fieldName string, operator string, valueExpression string) {
+func (tableReplace *TableReplace) AddWhere(fieldName string, operator string, valueExpression string) *TableReplace {
 	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, operator, valueExpression})
+	return tableReplace
 }
 
-func (tableReplace *TableReplace) AddWhereDate(fieldName string, date civil.Date) {
+func (tableReplace *TableReplace) AddWhereDate(fieldName string, date civil.Date) *TableReplace {
 	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, "=", fmt.Sprintf("'%s'", date.String())})
+	return tableReplace
 }
 
-func (tableReplace *TableReplace) AddWhereDateRange(fieldName string, startDate civil.Date, endDate civil.Date) {
+func (tableReplace *TableReplace) AddWhereDateRange(fieldName string, startDate civil.Date, endDate civil.Date) *TableReplace {
 	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, "BETWEEN", fmt.Sprintf("'%s' AND '%s'", startDate.String(), endDate.String())})
+	return tableReplace
 }
 
 func (tableReplace *TableReplace) AddWhereDates(fieldName string, dates []civil.Date) {
