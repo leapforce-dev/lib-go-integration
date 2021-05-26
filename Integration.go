@@ -16,9 +16,10 @@ import (
 )
 
 const (
-	logBucketName string = "leapforce_xxx_log_new"
-	logProjectID  string = "leapforce-224115"
-	logDataset    string = "leapforce"
+	logBucketName          string = "leapforce_xxx_log_new"
+	logProjectID           string = "leapforce-224115"
+	logDataset             string = "leapforce"
+	apiKeyTruncationLength int    = 8
 )
 
 type Integration struct {
@@ -346,9 +347,14 @@ func (i Integration) Log(operation string, organisationID *int64, data interface
 			continue
 		}
 
+		apiKey := (*apiService).APIKey()
+		if len(apiKey) > apiKeyTruncationLength {
+			apiKey = apiKey[:apiKeyTruncationLength] + strings.Repeat("*", apiKeyTruncationLength)
+		}
+
 		apis = append(apis, APIInfo{
 			Name:      (*apiService).APIName(),
-			Key:       (*apiService).APIKey(),
+			Key:       apiKey,
 			CallCount: (*apiService).APICallCount(),
 		})
 	}
