@@ -36,7 +36,8 @@ type TableReplace struct {
 }
 
 type TableMerge struct {
-	JoinFields []string
+	JoinFields        []string
+	DoNotUpdateFields []string
 }
 
 type TableTruncate struct {
