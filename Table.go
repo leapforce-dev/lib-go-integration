@@ -44,7 +44,7 @@ type TableTruncate struct {
 }
 
 func TableReplaceDummy() *TableReplace {
-	var tableReplace *TableReplace
+	var tableReplace *TableReplace = &TableReplace{}
 	tableReplace.AddDummy()
 	return tableReplace
 }
