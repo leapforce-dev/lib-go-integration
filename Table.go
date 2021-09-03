@@ -43,6 +43,12 @@ type TableMerge struct {
 type TableTruncate struct {
 }
 
+func TableReplaceDummy() *TableReplace {
+	var tableReplace *TableReplace
+	tableReplace.AddDummy()
+	return tableReplace
+}
+
 func (tableReplace *TableReplace) Clear() *TableReplace {
 	tableReplace.wheres = []where{}
 	return tableReplace
