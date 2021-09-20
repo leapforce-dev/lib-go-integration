@@ -20,6 +20,7 @@ type Table struct {
 	Name        string
 	Granularity Granularity
 	Schema      interface{}
+	Append      *TableAppend
 	Replace     *TableReplace
 	Merge       *TableMerge
 	Truncate    *TableTruncate
@@ -30,6 +31,9 @@ type where struct {
 	Operator        string
 	ValueExpression string
 	isRaw           bool
+}
+
+type TableAppend struct {
 }
 
 type TableReplace struct {
