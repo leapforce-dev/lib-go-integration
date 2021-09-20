@@ -29,6 +29,7 @@ type where struct {
 	FieldName       string
 	Operator        string
 	ValueExpression string
+	isRaw           bool
 }
 
 type TableReplace struct {
@@ -55,22 +56,27 @@ func (tableReplace *TableReplace) Clear() *TableReplace {
 }
 
 func (tableReplace *TableReplace) AddDummy() *TableReplace {
-	tableReplace.wheres = append(tableReplace.wheres, where{"1", "=", "1"})
+	tableReplace.wheres = append(tableReplace.wheres, where{"1", "=", "1", false})
+	return tableReplace
+}
+
+func (tableReplace *TableReplace) AddWhereRaw(expression string) *TableReplace {
+	tableReplace.wheres = append(tableReplace.wheres, where{"", "", expression, true})
 	return tableReplace
 }
 
 func (tableReplace *TableReplace) AddWhere(fieldName string, operator string, valueExpression string) *TableReplace {
-	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, operator, valueExpression})
+	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, operator, valueExpression, false})
 	return tableReplace
 }
 
 func (tableReplace *TableReplace) AddWhereDate(fieldName string, date civil.Date) *TableReplace {
-	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, "=", fmt.Sprintf("'%s'", date.String())})
+	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, "=", fmt.Sprintf("'%s'", date.String()), false})
 	return tableReplace
 }
 
 func (tableReplace *TableReplace) AddWhereDateRange(fieldName string, startDate civil.Date, endDate civil.Date) *TableReplace {
-	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, "BETWEEN", fmt.Sprintf("'%s' AND '%s'", startDate.String(), endDate.String())})
+	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, "BETWEEN", fmt.Sprintf("'%s' AND '%s'", startDate.String(), endDate.String()), false})
 	return tableReplace
 }
 
@@ -85,7 +91,7 @@ func (tableReplace *TableReplace) AddWhereDates(fieldName string, dates []civil.
 		datesString = append(datesString, date.String())
 	}
 
-	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, "IN", fmt.Sprintf("('%s')", strings.Join(datesString, "','"))})
+	tableReplace.wheres = append(tableReplace.wheres, where{fieldName, "IN", fmt.Sprintf("('%s')", strings.Join(datesString, "','")), false})
 }
 
 func (tableReplace *TableReplace) WhereString() *string {
@@ -96,6 +102,11 @@ func (tableReplace *TableReplace) WhereString() *string {
 	whereStrings := []string{}
 
 	for _, where := range tableReplace.wheres {
+		if where.isRaw {
+			whereStrings = append(whereStrings, where.ValueExpression)
+			continue
+		}
+
 		fieldName := strings.Trim(where.FieldName, " ")
 		if fieldName == "" {
 			continue
