@@ -6,7 +6,7 @@ import (
 
 var retryUponHTTPStatusCode []int
 
-func Retry(httpStatusCode int) bool {
+func HTTPRetry(httpStatusCode int) bool {
 	for _, s := range retryUponHTTPStatusCode {
 		if s == httpStatusCode {
 			return true
@@ -16,18 +16,18 @@ func Retry(httpStatusCode int) bool {
 	return false
 }
 
-func SetRetry(statusCodes []int) {
+func SetHTTPRetry(statusCodes []int) {
 	retryUponHTTPStatusCode = statusCodes
 }
 
-func AddRetry(statusCodes []int) {
+func AddHTTPRetry(statusCodes []int) {
 	retryUponHTTPStatusCode = append(retryUponHTTPStatusCode, statusCodes...)
 }
 
-func ResetRetry() {
-	initRetry()
+func ResetHTTPRetry() {
+	initHTTPRetry()
 }
 
-func initRetry() {
+func initHTTPRetry() {
 	retryUponHTTPStatusCode = []int{http.StatusInternalServerError, http.StatusServiceUnavailable, http.StatusGatewayTimeout}
 }
