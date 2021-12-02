@@ -57,6 +57,7 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 	}
 
 	initDebug()
+	initHTTPRetry()
 
 	var validEnvironments, validModes *[]string = &[]string{}, &[]string{}
 
