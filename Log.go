@@ -26,11 +26,11 @@ type Log struct {
 	Timestamp      time.Time
 	Operation      string
 	OrganisationID bigquery.NullInt64
-	APIs           []APIInfo
+	Apis           []ApiInfo
 	Data           string
 }
 
-type APIInfo struct {
+type ApiInfo struct {
 	Name      string
 	Key       string
 	CallCount int64

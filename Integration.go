@@ -32,7 +32,7 @@ type Integration struct {
 	validModes             *[]string
 	includeOrganisationIDs *[]int64
 	excludeOrganisationIDs *[]int64
-	apiServices            []*APIService
+	apiServices            []*ApiService
 }
 
 type IntegrationConfig struct {
@@ -178,9 +178,7 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		excludeOrganisationIDs = new([]int64)
 		for _, c := range integrationConfig.OtherConfigs {
 			if c.OrganisationIDs != nil {
-				for _, o := range *c.OrganisationIDs {
-					*excludeOrganisationIDs = append((*excludeOrganisationIDs), o)
-				}
+				*excludeOrganisationIDs = append((*excludeOrganisationIDs), *c.OrganisationIDs...)
 			}
 		}
 	}
@@ -325,11 +323,11 @@ func (i Integration) EndOrganisation(organisationID int64) *errortools.Error {
 	return i.Log("end_organisation", &organisationID, nil)
 }
 
-func (i Integration) start(apiServices ...*APIService) *errortools.Error {
+func (i Integration) start(apiServices ...*ApiService) *errortools.Error {
 	return i.Log("start", nil, nil)
 }
 
-func (i Integration) end(apiServices ...*APIService) *errortools.Error {
+func (i Integration) end(apiServices ...*ApiService) *errortools.Error {
 	return i.Log("end", nil, nil)
 }
 
@@ -341,22 +339,22 @@ func (i Integration) Log(operation string, organisationID *int64, data interface
 		return errortools.ErrorMessage("Logger not initialized")
 	}
 
-	apis := []APIInfo{}
+	apis := []ApiInfo{}
 
 	for _, apiService := range i.apiServices {
 		if apiService == nil {
 			continue
 		}
 
-		apiKey := (*apiService).APIKey()
+		apiKey := (*apiService).ApiKey()
 		if len(apiKey) > apiKeyTruncationLength {
 			apiKey = apiKey[:apiKeyTruncationLength] + strings.Repeat("*", apiKeyTruncationLength)
 		}
 
-		apis = append(apis, APIInfo{
-			Name:      (*apiService).APIName(),
+		apis = append(apis, ApiInfo{
+			Name:      (*apiService).ApiName(),
 			Key:       apiKey,
-			CallCount: (*apiService).APICallCount(),
+			CallCount: (*apiService).ApiCallCount(),
 		})
 	}
 
@@ -368,7 +366,7 @@ func (i Integration) Log(operation string, organisationID *int64, data interface
 		Timestamp:      time.Now(),
 		Operation:      operation,
 		OrganisationID: go_bigquery.Int64ToNullInt64(organisationID),
-		APIs:           apis,
+		Apis:           apis,
 	}
 
 	if !utilities.IsNil(data) {
@@ -418,16 +416,16 @@ func (i *Integration) Close() *errortools.Error {
 	return nil
 }
 
-func (i *Integration) APIServices(apiServices ...*APIService) {
+func (i *Integration) ApiServices(apiServices ...*ApiService) {
 	i.apiServices = apiServices
 }
 
-func (i *Integration) ResetAPIServices() {
+func (i *Integration) ResetApiServices() {
 	for _, apiService := range i.apiServices {
 		if apiService == nil {
 			continue
 		}
 
-		(*apiService).APIReset()
+		(*apiService).ApiReset()
 	}
 }

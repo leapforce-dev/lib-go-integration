@@ -23,11 +23,7 @@ func IsModeHistory() bool {
 }
 
 func IsMode(mode interface{}) bool {
-	return strings.ToUpper(currentMode) == strings.ToUpper(fmt.Sprintf("%v", mode))
-}
-
-func modeIsValid() bool {
-	return IsModeRecent() || IsModeHistory()
+	return strings.EqualFold(currentMode, fmt.Sprintf("%v", mode))
 }
 
 func CurrentMode() string {

@@ -16,9 +16,9 @@ func Today() civil.Date {
 }
 
 func TomorrowPtr() *civil.Date {
-	return today
+	return tomorrow
 }
 
 func Tomorrow() civil.Date {
-	return *TodayPtr()
+	return *TomorrowPtr()
 }

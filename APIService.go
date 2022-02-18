@@ -1,8 +1,8 @@
 package integration
 
-type APIService interface {
-	APIName() string
-	APIKey() string
-	APICallCount() int64
-	APIReset()
+type ApiService interface {
+	ApiName() string
+	ApiKey() string
+	ApiCallCount() int64
+	ApiReset()
 }

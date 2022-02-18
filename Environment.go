@@ -41,5 +41,4 @@ func WithEnvironment(names ...*string) {
 		}
 		(*name) = fmt.Sprintf("%s_%s", *name, CurrentEnvironment())
 	}
-	return
 }
