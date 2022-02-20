@@ -2,20 +2,18 @@ package integration
 
 import (
 	"fmt"
-
-	credentials "github.com/leapforce-libraries/go_google/credentials"
 )
 
 type Config struct {
-	AppName               string
-	ProjectID             string
-	Bucket                string
-	Dataset               string
-	SentryDSN             string
-	settings              map[string]string
-	ServiceAccountJSONKey *credentials.CredentialsJSON
-	LogOrganisationID     *int64   // if the integration runs for a single organisation pass it's ID here
-	OrganisationIDs       *[]int64 // if nil, app runs for all organisationIDs not specified in any config from OtherConfigs
+	AppName   string
+	ProjectId string
+	Bucket    string
+	Dataset   string
+	SentryDSN string
+	settings  map[string]string
+	//ServiceAccountJSONKey *credentials.CredentialsJSON
+	LogOrganisationId *int64   // if the integration runs for a single organisation pass it's Id here
+	OrganisationIds   *[]int64 // if nil, app runs for all organisationIds not specified in any config from OtherConfigs
 }
 
 func (config *Config) Set(key interface{}, value string) {
@@ -37,7 +35,7 @@ func (config *Config) Get(key interface{}) (string, bool) {
 }
 
 func (config *Config) FullTableName(tableName string, quoted bool) string {
-	_tableName := fmt.Sprintf("%s.%s.%s", config.ProjectID, config.Dataset, tableName)
+	_tableName := fmt.Sprintf("%s.%s.%s", config.ProjectId, config.Dataset, tableName)
 
 	if quoted {
 		_tableName = fmt.Sprintf("`%s`", _tableName)
