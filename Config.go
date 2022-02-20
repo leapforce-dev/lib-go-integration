@@ -9,7 +9,7 @@ type Config struct {
 	ProjectId string
 	Bucket    string
 	Dataset   string
-	SentryDSN string
+	SentryDsn string
 	settings  map[string]string
 	//ServiceAccountJSONKey *credentials.CredentialsJSON
 	LogOrganisationId *int64   // if the integration runs for a single organisation pass it's Id here
