@@ -2,16 +2,18 @@ package integration
 
 import (
 	"fmt"
+
+	credentials "github.com/leapforce-libraries/go_google/credentials"
 )
 
 type Config struct {
-	AppName   string
-	ProjectId string
-	Bucket    string
-	Dataset   string
-	SentryDsn string
-	settings  map[string]string
-	//ServiceAccountJSONKey *credentials.CredentialsJSON
+	AppName           string
+	ProjectId         string
+	Bucket            string
+	Dataset           string
+	SentryDsn         string
+	settings          map[string]string
+	Credentials       *credentials.CredentialsJson
 	LogOrganisationId *int64   // if the integration runs for a single organisation pass it's Id here
 	OrganisationIds   *[]int64 // if nil, app runs for all organisationIds not specified in any config from OtherConfigs
 }
