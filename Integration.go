@@ -315,23 +315,23 @@ func (i Integration) modeIsValid() bool {
 	return false
 }
 
-func (i Integration) StartCompany(companyId int64) *errortools.Error {
-	return i.Log("start_company", &companyId, nil)
+func (i Integration) StartSoftwareClientLicense(companyId int64, softwareClientLicenseGuid string) *errortools.Error {
+	return i.Log("start_softwareclientlicense", &companyId, &softwareClientLicenseGuid, nil)
 }
 
-func (i Integration) EndCompany(companyId int64) *errortools.Error {
-	return i.Log("end_company", &companyId, nil)
+func (i Integration) EndSoftwareClientLicense(companyId int64, softwareClientLicenseGuid string) *errortools.Error {
+	return i.Log("end_softwareclientlicense", &companyId, &softwareClientLicenseGuid, nil)
 }
 
 func (i Integration) start(apiServices ...*ApiService) *errortools.Error {
-	return i.Log("start", nil, nil)
+	return i.Log("start", nil, nil, nil)
 }
 
 func (i Integration) end(apiServices ...*ApiService) *errortools.Error {
-	return i.Log("end", nil, nil)
+	return i.Log("end", nil, nil, nil)
 }
 
-func (i Integration) Log(operation string, companyId *int64, data interface{}) *errortools.Error {
+func (i Integration) Log(operation string, companyId *int64, SoftwareClientLicenseGuid *string, data interface{}) *errortools.Error {
 	if companyId == nil {
 		companyId = i.config.LogCompanyId
 	}
@@ -359,14 +359,15 @@ func (i Integration) Log(operation string, companyId *int64, data interface{}) *
 	}
 
 	log := Log{
-		AppName:     i.config.AppName,
-		Environment: CurrentEnvironment(),
-		Mode:        CurrentMode(),
-		Run:         i.run,
-		Timestamp:   time.Now(),
-		Operation:   operation,
-		CompanyId:   go_bigquery.Int64ToNullInt64(companyId),
-		Apis:        apis,
+		AppName:                   i.config.AppName,
+		Environment:               CurrentEnvironment(),
+		Mode:                      CurrentMode(),
+		Run:                       i.run,
+		Timestamp:                 time.Now(),
+		Operation:                 operation,
+		CompanyId:                 go_bigquery.Int64ToNullInt64(companyId),
+		SoftwareClientLicenseGuid: go_bigquery.StringToNullString(SoftwareClientLicenseGuid),
+		Apis:                      apis,
 	}
 
 	if !utilities.IsNil(data) {
