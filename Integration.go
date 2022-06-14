@@ -16,23 +16,23 @@ import (
 )
 
 const (
-	logBucketName          string = "leapforce_xxx_log_new"
+	logBucketName          string = "leapforce_xxx_log"
 	logProjectId           string = "leapforce-224115"
 	logDataset             string = "leapforce"
 	apiKeyTruncationLength int    = 8
 )
 
 type Integration struct {
-	config                 *Config
-	configName             string
-	run                    string
-	logCredentials         *credentials.CredentialsJson
-	logger                 *gcs.Logger
-	validEnvironments      *[]string
-	validModes             *[]string
-	includeOrganisationIds *[]int64
-	excludeOrganisationIds *[]int64
-	apiServices            []*ApiService
+	config            *Config
+	configName        string
+	run               string
+	logCredentials    *credentials.CredentialsJson
+	logger            *gcs.Logger
+	validEnvironments *[]string
+	validModes        *[]string
+	includeCompanyIds *[]int64
+	excludeCompanyIds *[]int64
+	apiServices       []*ApiService
 }
 
 type IntegrationConfig struct {
@@ -173,27 +173,27 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		config = integrationConfig.DefaultConfig
 	}
 
-	var excludeOrganisationIds *[]int64 = nil
+	var excludeCompanyIds *[]int64 = nil
 	if len(integrationConfig.OtherConfigs) > 0 {
-		excludeOrganisationIds = new([]int64)
+		excludeCompanyIds = new([]int64)
 		for _, c := range integrationConfig.OtherConfigs {
-			if c.OrganisationIds != nil {
-				*excludeOrganisationIds = append((*excludeOrganisationIds), *c.OrganisationIds...)
+			if c.CompanyIds != nil {
+				*excludeCompanyIds = append((*excludeCompanyIds), *c.CompanyIds...)
 			}
 		}
 	}
 
 	guid := go_types.NewGuid()
 	integration := Integration{
-		config:                 config,
-		configName:             configName,
-		run:                    guid.String(),
-		logCredentials:         integrationConfig.LogCredentials,
-		validEnvironments:      validEnvironments,
-		validModes:             validModes,
-		logger:                 nil,
-		includeOrganisationIds: config.OrganisationIds,
-		excludeOrganisationIds: excludeOrganisationIds,
+		config:            config,
+		configName:        configName,
+		run:               guid.String(),
+		logCredentials:    integrationConfig.LogCredentials,
+		validEnvironments: validEnvironments,
+		validModes:        validModes,
+		logger:            nil,
+		includeCompanyIds: config.CompanyIds,
+		excludeCompanyIds: excludeCompanyIds,
 	}
 
 	if !integration.environmentIsValid() {
@@ -257,19 +257,19 @@ func (i Integration) Config() *Config {
 	return i.config
 }
 
-func (i Integration) DoOrganisation(organisationId int64) bool {
-	if i.includeOrganisationIds != nil {
-		for _, o := range *i.includeOrganisationIds {
-			if o == organisationId {
+func (i Integration) DoCompany(companyId int64) bool {
+	if i.includeCompanyIds != nil {
+		for _, o := range *i.includeCompanyIds {
+			if o == companyId {
 				return true
 			}
 		}
 
 		return false
 	}
-	if i.excludeOrganisationIds != nil {
-		for _, o := range *i.excludeOrganisationIds {
-			if o == organisationId {
+	if i.excludeCompanyIds != nil {
+		for _, o := range *i.excludeCompanyIds {
+			if o == companyId {
 				return false
 			}
 		}
@@ -315,12 +315,12 @@ func (i Integration) modeIsValid() bool {
 	return false
 }
 
-func (i Integration) StartOrganisation(organisationId int64) *errortools.Error {
-	return i.Log("start_organisation", &organisationId, nil)
+func (i Integration) StartCompany(companyId int64) *errortools.Error {
+	return i.Log("start_company", &companyId, nil)
 }
 
-func (i Integration) EndOrganisation(organisationId int64) *errortools.Error {
-	return i.Log("end_organisation", &organisationId, nil)
+func (i Integration) EndCompany(companyId int64) *errortools.Error {
+	return i.Log("end_company", &companyId, nil)
 }
 
 func (i Integration) start(apiServices ...*ApiService) *errortools.Error {
@@ -331,9 +331,9 @@ func (i Integration) end(apiServices ...*ApiService) *errortools.Error {
 	return i.Log("end", nil, nil)
 }
 
-func (i Integration) Log(operation string, organisationId *int64, data interface{}) *errortools.Error {
-	if organisationId == nil {
-		organisationId = i.config.LogOrganisationId
+func (i Integration) Log(operation string, companyId *int64, data interface{}) *errortools.Error {
+	if companyId == nil {
+		companyId = i.config.LogCompanyId
 	}
 	if i.logger == nil {
 		return errortools.ErrorMessage("Logger not initialized")
@@ -359,14 +359,14 @@ func (i Integration) Log(operation string, organisationId *int64, data interface
 	}
 
 	log := Log{
-		AppName:        i.config.AppName,
-		Environment:    CurrentEnvironment(),
-		Mode:           CurrentMode(),
-		Run:            i.run,
-		Timestamp:      time.Now(),
-		Operation:      operation,
-		OrganisationId: go_bigquery.Int64ToNullInt64(organisationId),
-		Apis:           apis,
+		AppName:     i.config.AppName,
+		Environment: CurrentEnvironment(),
+		Mode:        CurrentMode(),
+		Run:         i.run,
+		Timestamp:   time.Now(),
+		Operation:   operation,
+		CompanyId:   go_bigquery.Int64ToNullInt64(companyId),
+		Apis:        apis,
 	}
 
 	if !utilities.IsNil(data) {
