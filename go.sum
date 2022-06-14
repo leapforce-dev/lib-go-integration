@@ -280,6 +280,8 @@ github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/labstack/echo/v4 v4.1.11/go.mod h1:i541M3Fj6f76NZtHSj7TXnyM8n2gaodfvfxNnFqi74g=
 github.com/labstack/gommon v0.3.0/go.mod h1:MULnywXg0yavhxWKc+lOruYdAhDwPK9wf0OL7NoOu+k=
+github.com/leapforce-libraries/go_creds v0.0.0-20220419160510-da84b7526e8d h1:ILOMrvuv8TheIwv3T2Yd7qvKLMg6za663ZkbAkjMp68=
+github.com/leapforce-libraries/go_creds v0.0.0-20220419160510-da84b7526e8d/go.mod h1:eqjfQcsDbc2Ss5P2ytczGkYR0q5qXrFrBBRC0an2aMA=
 github.com/leapforce-libraries/go_errortools v0.0.0-20210305222651-2350bce9f587/go.mod h1:qw2+jRSmAUBmnLgN9kgiadj31C2j7j4f9jSxuydSBHg=
 github.com/leapforce-libraries/go_errortools v0.0.0-20210421105612-afc8a27266b6/go.mod h1:qw2+jRSmAUBmnLgN9kgiadj31C2j7j4f9jSxuydSBHg=
 github.com/leapforce-libraries/go_errortools v0.0.0-20210628193911-6d614fa4274a/go.mod h1:qw2+jRSmAUBmnLgN9kgiadj31C2j7j4f9jSxuydSBHg=
@@ -307,6 +309,7 @@ github.com/leapforce-libraries/go_http v0.0.0-20210326105232-ecf506e03a53/go.mod
 github.com/leapforce-libraries/go_http v0.0.0-20210713192036-b809589a39a5/go.mod h1:oLjyrzaC0GhA55yFJ5Dlb5eOR1ASojX9tKxLIOlPXtY=
 github.com/leapforce-libraries/go_http v0.0.0-20211007104330-25a0057f4099/go.mod h1:9ufsotcoNd0bg5RmE+5IBYI4mJ6kYSU42/ndthZwRvo=
 github.com/leapforce-libraries/go_http v0.0.0-20211202234851-eaff78430048/go.mod h1:Hk8mZd9YOzWWbriAKMW3hI3YHFgIA5vfAcM0tHNGOng=
+github.com/leapforce-libraries/go_http v0.0.0-20220406191830-0235c3965bb8 h1:/Fi0RO9gKH9wPVRZ2WPZy5mV/tKyxlXmLoY5NDvg1eM=
 github.com/leapforce-libraries/go_http v0.0.0-20220406191830-0235c3965bb8/go.mod h1:BdsyzkCM14+6ttZ5POnQGLnBXykZS8miN4VXiOGaHWY=
 github.com/leapforce-libraries/go_integration v0.0.0-20210526180733-68a2aeb4410c/go.mod h1:H66cM421lWMH1xyiirtH5nhs5U8NPFH6U3UsfaGv+Is=
 github.com/leapforce-libraries/go_integration v0.0.0-20210920180622-04fe815f1d5e/go.mod h1:0HIZl1eBAV9R/vLblAWcdXovU2P+B2JoZFimOwKHHwk=
