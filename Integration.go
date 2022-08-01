@@ -49,6 +49,7 @@ type IntegrationConfig struct {
 	OtherModes                *[]string
 	OtherCompulsoryArguments  *[]*string
 	OtherFacultativeArguments *[]*string
+	Arguments                 *[]string
 }
 
 func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errortools.Error) {
@@ -59,10 +60,10 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 	initDebug()
 	initHttpRetry()
 
-	var validEnvironments, validModes *[]string = &[]string{}, &[]string{}
+	var validEnvironments, validModes = &[]string{}, &[]string{}
 
-	var hasEnvironment, hasEnvironmentTest, hasEnvironmentLive bool = true, true, true
-	var hasMode, hasModeRecent, hasModeHistory bool = true, true, true
+	var hasEnvironment, hasEnvironmentTest, hasEnvironmentLive = true, true, true
+	var hasMode, hasModeRecent, hasModeHistory = true, true, true
 
 	if integrationConfig != nil {
 		if integrationConfig.HasEnvironment != nil {
@@ -143,15 +144,14 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		}
 	}
 
-	//if len(arguments) > 0 {
-	prefixArguments, e := utilities.GetArguments(&required, arguments...)
+	prefixArguments, e := utilities.GetArguments(&required, integrationConfig.Arguments, arguments...)
 	if e != nil {
 		return nil, e
 	}
 
 	// extract config
 	var config *Config = nil
-	var configName string = "default"
+	var configName = "default"
 	if prefixArguments != nil {
 		_configName, ok := (*prefixArguments)["c"]
 		if ok {
