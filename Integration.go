@@ -257,6 +257,10 @@ func (i Integration) Config() *Config {
 	return i.config
 }
 
+func (i Integration) ConfigName() string {
+	return i.configName
+}
+
 func (i Integration) DoCompany(companyId int64) bool {
 	if i.includeCompanyIds != nil {
 		for _, o := range *i.includeCompanyIds {
