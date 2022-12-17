@@ -425,6 +425,33 @@ func (i *Integration) ApiServices(apiServices ...*ApiService) {
 	i.apiServices = apiServices
 }
 
+func (i *Integration) AddApiService(apiService *ApiService) {
+	if apiService == nil {
+		return
+	}
+	i.apiServices = append(i.apiServices, apiService)
+}
+
+func (i *Integration) RemoveApiService(apiService *ApiService) {
+	if apiService == nil {
+		return
+	}
+
+	var apiServices []*ApiService
+	for j := range i.apiServices {
+		if i.apiServices[j] == nil {
+			continue
+		}
+		if (*i.apiServices[j]).ApiName() == (*apiService).ApiName() &&
+			(*i.apiServices[j]).ApiKey() == (*apiService).ApiKey() {
+			continue
+		}
+		apiServices = append(apiServices, i.apiServices[j])
+	}
+
+	i.apiServices = apiServices
+}
+
 func (i *Integration) ResetApiServices() {
 	for _, apiService := range i.apiServices {
 		if apiService == nil {
