@@ -5,6 +5,7 @@ go 1.18
 require (
 	cloud.google.com/go v0.107.0
 	cloud.google.com/go/bigquery v1.44.0
+	github.com/google/uuid v1.3.0
 	github.com/leapforce-libraries/go_errortools v0.0.0-20220808170134-6bf8d8106f1b
 	github.com/leapforce-libraries/go_google v0.0.0-20221127152331-c262dabbdd2e
 	github.com/leapforce-libraries/go_googlecloudstorage v0.0.0-20220613120507-258e984f5c4f
@@ -22,7 +23,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.7.0 // indirect
 	go.opencensus.io v0.24.0 // indirect

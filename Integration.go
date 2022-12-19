@@ -3,7 +3,9 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"strings"
+	"sync"
 	"time"
 
 	"cloud.google.com/go/civil"
@@ -23,6 +25,7 @@ const (
 )
 
 type Integration struct {
+	sync.RWMutex
 	config            *Config
 	configName        string
 	run               string
@@ -32,7 +35,7 @@ type Integration struct {
 	validModes        *[]string
 	includeCompanyIds *[]int64
 	excludeCompanyIds *[]int64
-	apiServices       []*ApiService
+	apiServices       []*ApiServiceWithKey
 }
 
 type IntegrationConfig struct {
@@ -204,7 +207,7 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 		return nil, errortools.ErrorMessage(fmt.Sprintf("Invalid mode: '%s'", CurrentMode()))
 	}
 
-	integration.SetToday()
+	integration.setToday(false)
 
 	//init logger
 	e = integration.initLogger()
@@ -284,11 +287,20 @@ func (i Integration) DoCompany(companyId int64) bool {
 	return true
 }
 
-func (i Integration) SetToday() {
+func (i Integration) setToday(lock bool) {
+	if lock {
+		i.Lock()
+		defer i.Unlock()
+	}
+
 	_today := civil.DateOf(time.Now())
 	today = &_today
 	_tomorrow := _today.AddDays(1)
 	tomorrow = &_tomorrow
+}
+
+func (i Integration) SetToday() {
+	i.setToday(true)
 }
 
 func (i Integration) environmentIsValid() bool {
@@ -320,22 +332,31 @@ func (i Integration) modeIsValid() bool {
 }
 
 func (i Integration) StartSoftwareClientLicense(companyId int64, softwareClientLicenseGuid string) *errortools.Error {
-	return i.Log("start_softwareclientlicense", &companyId, &softwareClientLicenseGuid, nil)
+	return i.log("start_softwareclientlicense", nil, &companyId, &softwareClientLicenseGuid, nil, false)
 }
 
 func (i Integration) EndSoftwareClientLicense(companyId int64, softwareClientLicenseGuid string) *errortools.Error {
-	return i.Log("end_softwareclientlicense", &companyId, &softwareClientLicenseGuid, nil)
+	return i.log("end_softwareclientlicense", nil, &companyId, &softwareClientLicenseGuid, nil, false)
 }
 
-func (i Integration) start(apiServices ...*ApiService) *errortools.Error {
-	return i.Log("start", nil, nil, nil)
+func (i Integration) start() *errortools.Error {
+	return i.log("start", nil, nil, nil, nil, false)
 }
 
-func (i Integration) end(apiServices ...*ApiService) *errortools.Error {
-	return i.Log("end", nil, nil, nil)
+func (i Integration) end() *errortools.Error {
+	return i.log("end", nil, nil, nil, nil, false)
 }
 
-func (i Integration) Log(operation string, companyId *int64, SoftwareClientLicenseGuid *string, data interface{}) *errortools.Error {
+func (i Integration) Log(operation string, companyId *int64, softwareClientLicenseGuid *string, data interface{}) *errortools.Error {
+	return i.log(operation, nil, companyId, softwareClientLicenseGuid, data, true)
+}
+
+func (i Integration) log(operation string, key *string, companyId *int64, softwareClientLicenseGuid *string, data interface{}, lock bool) *errortools.Error {
+	if lock {
+		i.Lock()
+		defer i.Unlock()
+	}
+
 	if companyId == nil {
 		companyId = i.config.LogCompanyId
 	}
@@ -343,22 +364,28 @@ func (i Integration) Log(operation string, companyId *int64, SoftwareClientLicen
 		return errortools.ErrorMessage("Logger not initialized")
 	}
 
-	apis := []ApiInfo{}
+	var apis []ApiInfo
 
 	for _, apiService := range i.apiServices {
-		if apiService == nil {
+		if apiService.ApiService == nil {
 			continue
 		}
 
-		apiKey := (*apiService).ApiKey()
+		if key != nil {
+			if *key != apiService.Key {
+				continue
+			}
+		}
+
+		apiKey := (*apiService.ApiService).ApiKey()
 		if len(apiKey) > apiKeyTruncationLength {
 			apiKey = apiKey[:apiKeyTruncationLength] + strings.Repeat("*", apiKeyTruncationLength)
 		}
 
 		apis = append(apis, ApiInfo{
-			Name:      (*apiService).ApiName(),
+			Name:      (*apiService.ApiService).ApiName(),
 			Key:       apiKey,
-			CallCount: (*apiService).ApiCallCount(),
+			CallCount: (*apiService.ApiService).ApiCallCount(),
 		})
 	}
 
@@ -370,7 +397,7 @@ func (i Integration) Log(operation string, companyId *int64, SoftwareClientLicen
 		Timestamp:                 time.Now(),
 		Operation:                 operation,
 		CompanyId:                 go_bigquery.Int64ToNullInt64(companyId),
-		SoftwareClientLicenseGuid: go_bigquery.StringToNullString(SoftwareClientLicenseGuid),
+		SoftwareClientLicenseGuid: go_bigquery.StringToNullString(softwareClientLicenseGuid),
 		Apis:                      apis,
 	}
 
@@ -386,6 +413,9 @@ func (i Integration) Log(operation string, companyId *int64, SoftwareClientLicen
 }
 
 func (i *Integration) SaveLog(reInit bool) *errortools.Error {
+	i.Lock()
+	defer i.Unlock()
+
 	if i.logger == nil {
 		return errortools.ErrorMessage("Logger not initialized")
 	}
@@ -408,6 +438,9 @@ func (i *Integration) SaveLog(reInit bool) *errortools.Error {
 }
 
 func (i *Integration) Close() *errortools.Error {
+	i.Lock()
+	defer i.Unlock()
+
 	e := i.end()
 	if e != nil {
 		return e
@@ -422,42 +455,67 @@ func (i *Integration) Close() *errortools.Error {
 }
 
 func (i *Integration) ApiServices(apiServices ...*ApiService) {
-	i.apiServices = apiServices
-}
+	i.Lock()
+	defer i.Unlock()
 
-func (i *Integration) AddApiService(apiService *ApiService) {
-	if apiService == nil {
-		return
-	}
-	i.apiServices = append(i.apiServices, apiService)
-}
+	var a []*ApiServiceWithKey
 
-func (i *Integration) RemoveApiService(apiService *ApiService) {
-	if apiService == nil {
-		return
+	for j := range apiServices {
+		a = append(a, &ApiServiceWithKey{ApiService: apiServices[j]})
 	}
 
-	var apiServices []*ApiService
+	i.apiServices = a
+}
+
+func (i *Integration) AddApiService(apiService *ApiService, sender string, user string, data interface{}) string {
+	i.Lock()
+	defer i.Unlock()
+
+	key := uuid.NewString()
+
+	i.apiServices = append(i.apiServices, &ApiServiceWithKey{
+		Key:        key,
+		Sender:     sender,
+		User:       user,
+		ApiService: apiService,
+	})
+
+	return key
+}
+
+func (i *Integration) RemoveApiService(key string) *errortools.Error {
+	i.Lock()
+	defer i.Unlock()
+
+	var a []*ApiServiceWithKey
+
 	for j := range i.apiServices {
-		if i.apiServices[j] == nil {
+		if i.apiServices[j].Key == key {
+			e := i.log(i.apiServices[j].Sender, nil, nil, nil, i.apiServices[j].User, false)
+			if e != nil {
+				return e
+			}
+
 			continue
 		}
-		if (*i.apiServices[j]).ApiName() == (*apiService).ApiName() &&
-			(*i.apiServices[j]).ApiKey() == (*apiService).ApiKey() {
-			continue
-		}
-		apiServices = append(apiServices, i.apiServices[j])
+
+		a = append(a, i.apiServices[j])
 	}
 
-	i.apiServices = apiServices
+	i.apiServices = a
+
+	return nil
 }
 
 func (i *Integration) ResetApiServices() {
+	i.Lock()
+	defer i.Unlock()
+
 	for _, apiService := range i.apiServices {
-		if apiService == nil {
+		if apiService.ApiService == nil {
 			continue
 		}
 
-		(*apiService).ApiReset()
+		(*apiService.ApiService).ApiReset()
 	}
 }

@@ -6,3 +6,10 @@ type ApiService interface {
 	ApiCallCount() int64
 	ApiReset()
 }
+
+type ApiServiceWithKey struct {
+	Key        string
+	Sender     string
+	User       string
+	ApiService *ApiService
+}
