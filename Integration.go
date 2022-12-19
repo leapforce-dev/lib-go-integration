@@ -467,7 +467,7 @@ func (i *Integration) ApiServices(apiServices ...*ApiService) {
 	i.apiServices = a
 }
 
-func (i *Integration) AddApiService(apiService *ApiService, sender string, user string, data interface{}) string {
+func (i *Integration) AddApiService(apiService *ApiService, sender string, user string) string {
 	i.Lock()
 	defer i.Unlock()
 
