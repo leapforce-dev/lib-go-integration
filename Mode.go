@@ -10,8 +10,8 @@ var currentMode string
 type Mode string
 
 const (
-	ModeRecent  Mode = "recent"
-	ModeHistory Mode = "history"
+	ModeRecent  Mode = "RECENT"
+	ModeHistory Mode = "HISTORY"
 )
 
 func IsModeRecent() bool {
@@ -23,7 +23,7 @@ func IsModeHistory() bool {
 }
 
 func IsMode(mode interface{}) bool {
-	return strings.EqualFold(currentMode, fmt.Sprintf("%v", mode))
+	return CurrentMode() == strings.ToUpper(fmt.Sprintf("%v", mode))
 }
 
 func CurrentMode() string {
