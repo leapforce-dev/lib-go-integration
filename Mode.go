@@ -15,11 +15,11 @@ const (
 )
 
 func IsModeRecent() bool {
-	return currentMode == string(ModeRecent)
+	return CurrentMode() == string(ModeRecent)
 }
 
 func IsModeHistory() bool {
-	return currentMode == string(ModeHistory)
+	return CurrentMode() == string(ModeHistory)
 }
 
 func IsMode(mode interface{}) bool {
