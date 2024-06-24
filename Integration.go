@@ -26,16 +26,17 @@ const (
 
 type Integration struct {
 	sync.RWMutex
-	config            *Config
-	configName        string
-	run               string
-	logCredentials    *credentials.CredentialsJson
-	logger            *gcs.Logger
-	validEnvironments *[]string
-	validModes        *[]string
-	includeCompanyIds *[]int64
-	excludeCompanyIds *[]int64
-	apiServices       []*ApiServiceWithKey
+	config                        *Config
+	configName                    string
+	run                           string
+	logCredentials                *credentials.CredentialsJson
+	logger                        *gcs.Logger
+	validEnvironments             *[]string
+	validModes                    *[]string
+	includeCompanyIds             *[]int64
+	excludeCompanyIds             *[]int64
+	apiServices                   []*ApiServiceWithKey
+	onlySoftwareClientLicenseGuid string
 }
 
 type IntegrationConfig struct {
@@ -155,6 +156,7 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 	// extract config
 	var config *Config = nil
 	var configName = "default"
+	var onlySoftwareClientLicenseGuid = ""
 	if prefixArguments != nil {
 		_configName, ok := (*prefixArguments)["c"]
 		if ok {
@@ -167,6 +169,10 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 			if config == nil {
 				return nil, errortools.ErrorMessage(fmt.Sprintf("Config '%s' not found", configName))
 			}
+		}
+		_onlySoftwareClientLicenseGuid, ok := (*prefixArguments)["i"]
+		if ok {
+			onlySoftwareClientLicenseGuid = _onlySoftwareClientLicenseGuid
 		}
 	}
 	if config == nil {
@@ -188,15 +194,16 @@ func NewIntegration(integrationConfig *IntegrationConfig) (*Integration, *errort
 
 	guid := go_types.NewGuid()
 	integration := Integration{
-		config:            config,
-		configName:        configName,
-		run:               guid.String(),
-		logCredentials:    integrationConfig.LogCredentials,
-		validEnvironments: validEnvironments,
-		validModes:        validModes,
-		logger:            nil,
-		includeCompanyIds: config.CompanyIds,
-		excludeCompanyIds: excludeCompanyIds,
+		config:                        config,
+		configName:                    configName,
+		run:                           guid.String(),
+		logCredentials:                integrationConfig.LogCredentials,
+		validEnvironments:             validEnvironments,
+		validModes:                    validModes,
+		logger:                        nil,
+		includeCompanyIds:             config.CompanyIds,
+		excludeCompanyIds:             excludeCompanyIds,
+		onlySoftwareClientLicenseGuid: onlySoftwareClientLicenseGuid,
 	}
 
 	if !integration.environmentIsValid() {
@@ -246,7 +253,7 @@ func (i *Integration) initLogger() *errortools.Error {
 	return nil
 }
 
-func (i Integration) Print() {
+func (i *Integration) Print() {
 	if i.validModes != nil {
 		fmt.Printf(">>> Mode : %s\n", CurrentMode())
 	}
@@ -256,15 +263,19 @@ func (i Integration) Print() {
 	fmt.Printf(">>> Config : %s\n", i.configName)
 }
 
-func (i Integration) Config() *Config {
+func (i *Integration) Config() *Config {
 	return i.config
 }
 
-func (i Integration) ConfigName() string {
+func (i *Integration) ConfigName() string {
 	return i.configName
 }
 
-func (i Integration) DoCompany(companyId int64) bool {
+func (i *Integration) OnlySoftwareClientLicenseGuid() string {
+	return i.onlySoftwareClientLicenseGuid
+}
+
+func (i *Integration) DoCompany(companyId int64) bool {
 	if i.includeCompanyIds != nil {
 		for _, o := range *i.includeCompanyIds {
 			if o == companyId {
@@ -287,7 +298,7 @@ func (i Integration) DoCompany(companyId int64) bool {
 	return true
 }
 
-func (i Integration) setToday(lock bool) {
+func (i *Integration) setToday(lock bool) {
 	if lock {
 		i.Lock()
 		defer i.Unlock()
@@ -299,11 +310,11 @@ func (i Integration) setToday(lock bool) {
 	tomorrow = &_tomorrow
 }
 
-func (i Integration) SetToday() {
+func (i *Integration) SetToday() {
 	i.setToday(true)
 }
 
-func (i Integration) environmentIsValid() bool {
+func (i *Integration) environmentIsValid() bool {
 	if i.validEnvironments == nil {
 		return true
 	}
@@ -317,7 +328,7 @@ func (i Integration) environmentIsValid() bool {
 	return false
 }
 
-func (i Integration) modeIsValid() bool {
+func (i *Integration) modeIsValid() bool {
 	if i.validModes == nil {
 		return true
 	}
@@ -331,27 +342,27 @@ func (i Integration) modeIsValid() bool {
 	return false
 }
 
-func (i Integration) StartSoftwareClientLicense(companyId int64, softwareClientLicenseGuid string) *errortools.Error {
+func (i *Integration) StartSoftwareClientLicense(companyId int64, softwareClientLicenseGuid string) *errortools.Error {
 	return i.log("start_softwareclientlicense", nil, &companyId, &softwareClientLicenseGuid, nil, false)
 }
 
-func (i Integration) EndSoftwareClientLicense(companyId int64, softwareClientLicenseGuid string) *errortools.Error {
+func (i *Integration) EndSoftwareClientLicense(companyId int64, softwareClientLicenseGuid string) *errortools.Error {
 	return i.log("end_softwareclientlicense", nil, &companyId, &softwareClientLicenseGuid, nil, false)
 }
 
-func (i Integration) start() *errortools.Error {
+func (i *Integration) start() *errortools.Error {
 	return i.log("start", nil, nil, nil, nil, false)
 }
 
-func (i Integration) end() *errortools.Error {
+func (i *Integration) end() *errortools.Error {
 	return i.log("end", nil, nil, nil, nil, false)
 }
 
-func (i Integration) Log(operation string, companyId *int64, softwareClientLicenseGuid *string, data interface{}) *errortools.Error {
+func (i *Integration) Log(operation string, companyId *int64, softwareClientLicenseGuid *string, data interface{}) *errortools.Error {
 	return i.log(operation, nil, companyId, softwareClientLicenseGuid, data, true)
 }
 
-func (i Integration) log(operation string, key *string, companyId *int64, softwareClientLicenseGuid *string, data interface{}, lock bool) *errortools.Error {
+func (i *Integration) log(operation string, key *string, companyId *int64, softwareClientLicenseGuid *string, data interface{}, lock bool) *errortools.Error {
 	if lock {
 		i.Lock()
 		defer i.Unlock()
